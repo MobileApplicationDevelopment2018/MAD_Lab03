@@ -75,6 +75,10 @@ public class MainActivity extends AppCompatActivityDialog<MainActivity.DialogID>
             localProfile = new UserProfile();
         }
 
+        if (firebaseAuth.getCurrentUser() == null) {
+            this.signIn();
+        }
+
         updateNavigationView();
         if (savedInstanceState == null) {
             showDefaultFragment();
@@ -243,13 +247,16 @@ public class MainActivity extends AppCompatActivityDialog<MainActivity.DialogID>
                 .apply(RequestOptions.circleCropTransform())
                 .into(profilePicture);
 
-        drawer.getMenu().getItem(0).setChecked(true);
+        drawer.getMenu().findItem(R.id.nav_explore).setChecked(true);
         drawer.getHeaderView(0)
                 .findViewById(R.id.nh_profile_picture)
                 .setOnClickListener(v -> {
-                    DrawerLayout dr = findViewById(R.id.drawer_layout);
-                    replaceFragment(ShowProfileFragment.newInstance(localProfile));
-                    dr.closeDrawer(GravityCompat.START);
+                    if (!localProfile.isAnonymous()) {
+                        DrawerLayout dr = findViewById(R.id.drawer_layout);
+                        drawer.getMenu().findItem(R.id.nav_profile);
+                        replaceFragment(ShowProfileFragment.newInstance(localProfile));
+                        dr.closeDrawer(GravityCompat.START);
+                    }
                 });
     }
 
@@ -272,8 +279,8 @@ public class MainActivity extends AppCompatActivityDialog<MainActivity.DialogID>
     }
 
     private void onSignOut() {
-        showToast(R.string.sign_out_succeeded);
         localProfile = new UserProfile();
+        signIn();
         updateNavigationView();
         showDefaultFragment();
     }
