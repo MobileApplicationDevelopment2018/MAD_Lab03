@@ -3,7 +3,11 @@ package it.polito.mad.mad2018.data;
 import android.content.res.Resources;
 import android.support.annotation.NonNull;
 import android.text.TextUtils;
+import android.util.Log;
 
+import com.algolia.search.saas.Client;
+import com.algolia.search.saas.CompletionHandler;
+import com.algolia.search.saas.Index;
 import com.google.android.gms.tasks.Task;
 import com.google.android.gms.tasks.Tasks;
 import com.google.api.services.books.model.Volume;
@@ -13,6 +17,10 @@ import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageMetadata;
 import com.google.firebase.storage.StorageReference;
+import com.google.gson.GsonBuilder;
+
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.io.ByteArrayOutputStream;
 import java.io.Serializable;
@@ -26,15 +34,16 @@ import it.polito.mad.mad2018.utils.Utilities;
 
 public class Book implements Serializable {
     public static final int INITIAL_YEAR = 1900;
-    private static final String FIREBASE_BOOKS_KEY = "books";
-    private static final String FIREBASE_DATA_KEY = "data";
-
     public static final int BOOK_PICTURE_SIZE = 1024;
     public static final int BOOK_PICTURE_QUALITY = 50;
+
+    private static final String FIREBASE_BOOKS_KEY = "books";
+    private static final String FIREBASE_DATA_KEY = "data";
     private static final String FIREBASE_STORAGE_BOOKS_FOLDER = "books";
     private static final String FIREBASE_STORAGE_IMAGE_NAME = "picture";
-    private String bookId;
+
     private final Book.Data data;
+    private String bookId;
 
     public Book(@NonNull String bid, @NonNull Data data) {
         this.bookId = bid;
@@ -42,7 +51,7 @@ public class Book implements Serializable {
     }
 
     public Book(@NonNull String isbn, @NonNull Volume.VolumeInfo volumeInfo, Locale locale) {
-        this.bookId = null;
+        this.bookId = generateBookId();
         this.data = new Data();
 
         this.data.bookInfo.isbn = isbn;
@@ -70,7 +79,7 @@ public class Book implements Serializable {
     public Book(String isbn, @NonNull String title, @NonNull List<String> authors, @NonNull String language,
                 String publisher, int year, String conditions, @NonNull List<String> tags,
                 @NonNull Resources resources) {
-        this.bookId = null;
+        this.bookId = generateBookId();
         this.data = new Data();
 
         for (String author : authors) {
@@ -91,6 +100,11 @@ public class Book implements Serializable {
                 this.data.bookInfo.tags.add(Utilities.trimString(tag, resources.getInteger(R.integer.max_length_tag)));
             }
         }
+    }
+
+    private static String generateBookId() {
+        return FirebaseDatabase.getInstance().getReference()
+                .child(FIREBASE_BOOKS_KEY).push().getKey();
     }
 
     public String getBookId() {
@@ -150,10 +164,6 @@ public class Book implements Serializable {
         assert currentUser != null;
 
         this.data.uid = currentUser.getUid();
-        this.bookId = FirebaseDatabase.getInstance().getReference()
-                .child(FIREBASE_BOOKS_KEY)
-                .push()
-                .getKey();
 
         List<Task<?>> tasks = new ArrayList<>();
 
@@ -181,6 +191,28 @@ public class Book implements Serializable {
         }
 
         return Tasks.whenAllSuccess(tasks);
+    }
+
+    public void saveToAlgolia(CompletionHandler completionHandler) {
+
+        JSONObject object = this.data.bookInfo.toJSON();
+        if (object != null) {
+            Log.e("Algolia", data.toString());
+            AlgoliaBookIndex.getInstance()
+                    .addObjectAsync(object, bookId, completionHandler);
+        }
+    }
+
+    private static class AlgoliaBookIndex {
+        private static Index instance = null;
+
+        private static Index getInstance() {
+            if (instance == null) {
+                Client client = new Client(Constants.ALGOLIA_APP_ID, Constants.ALGOLIA_ADD_BOOK_API_KEY);
+                instance = client.getIndex(Constants.ALGOLIA_INDEX_NAME);
+            }
+            return instance;
+        }
     }
 
     /* Fields need to be public to enable Firebase to access them */
@@ -213,6 +245,14 @@ public class Book implements Serializable {
                 this.year = INITIAL_YEAR;
                 this.conditions = null;
                 this.tags = new ArrayList<>();
+            }
+
+            private JSONObject toJSON() {
+                try {
+                    return new JSONObject(new GsonBuilder().create().toJson(this));
+                } catch (JSONException e) {
+                    return null;
+                }
             }
         }
     }

@@ -9,8 +9,16 @@
             android:icon="@drawable/ic_home_black_24dp"
             android:title="@string/explore" />
         <item
-            android:id="@+id/nav_sign_in"
-            android:icon="@drawable/ic_sign_in_black_24dp"
-            android:title="@string/sign_in" />
+            android:id="@+id/nav_add_book"
+            android:icon="@drawable/ic_note_add_black_24dp"
+            android:title="@string/add_book" />
+        <item
+            android:id="@+id/nav_profile"
+            android:icon="@drawable/ic_person_black_24dp"
+            android:title="@string/profile" />
+        <item
+            android:id="@+id/nav_sign_out"
+            android:icon="@drawable/ic_sign_out_black_24dp"
+            android:title="@string/sign_out" />
     </group>
 </menu>

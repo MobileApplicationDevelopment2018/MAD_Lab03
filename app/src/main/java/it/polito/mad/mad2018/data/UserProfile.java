@@ -42,24 +42,26 @@ public class UserProfile implements Serializable {
     private static final int PROFILE_PICTURE_QUALITY = 50;
 
     private final Data data;
+    private boolean localImageToBeDeleted;
     private String localImagePath;
-
-    public UserProfile() {
-        this.data = new Data();
-    }
 
     public UserProfile(@NonNull Data data, @NonNull Resources resources) {
         this.data = data;
+        this.localImageToBeDeleted = false;
         this.localImagePath = null;
         trimFields(resources);
     }
 
     public UserProfile(@NonNull UserProfile other) {
         this.data = new Data(other.data);
+        this.localImageToBeDeleted = false;
+        this.localImagePath = null;
     }
 
     public UserProfile(FirebaseUser user, @NonNull Resources resources) {
         this.data = new Data();
+        this.localImageToBeDeleted = false;
+        this.localImagePath = null;
 
         if (user != null) {
             this.data.profile.email = user.getEmail();
@@ -120,15 +122,16 @@ public class UserProfile implements Serializable {
                 .removeEventListener(listener);
     }
 
-    public void setProfilePicture(String path) {
+    public void setProfilePicture(String path, boolean toBeDeleted) {
         this.data.profile.hasProfilePicture = path != null;
         this.data.profile.profilePictureLastModified = System.currentTimeMillis();
         this.data.profile.profilePictureThumbnail = null;
+        localImageToBeDeleted = toBeDeleted;
         localImagePath = path;
     }
 
     public void resetProfilePicture() {
-        setProfilePicture(null);
+        setProfilePicture(null, false);
     }
 
     public void update(@NonNull String username, @NonNull String location, @NonNull String biography) {
@@ -200,6 +203,10 @@ public class UserProfile implements Serializable {
         return this.localImagePath;
     }
 
+    public boolean isLocalImageToBeDeleted() {
+        return localImageToBeDeleted;
+    }
+
     public boolean profileUpdated(UserProfile other) {
         return !Utilities.equals(this.getEmail(), other.getEmail()) ||
                 !Utilities.equals(this.getUsername(), other.getUsername()) ||
@@ -229,13 +236,10 @@ public class UserProfile implements Serializable {
         return this.data.statistics.toBeReturnedBooks;
     }
 
-    public boolean isAnonymous() {
-        return this.data.profile.email == null;
-    }
-
     public boolean isLocal() {
         FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
-        return user == null || isAnonymous() || this.data.profile.email.equals(user.getEmail());
+        return user == null || user.getEmail() == null ||
+                user.getEmail().equals(this.data.profile.email);
 
     }
 
@@ -284,6 +288,7 @@ public class UserProfile implements Serializable {
     }
 
     public void postCommit() {
+        this.localImageToBeDeleted = false;
         this.localImagePath = null;
     }
 

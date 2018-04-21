@@ -43,7 +43,7 @@
     <string name="complete_profile">Controlla e completa le tue informazioni se vuoi</string>
     <string name="explore">Esplora</string>
     <string name="failed_load_data">Qualcosa è andato storto nel recupero delle tue informazioni. Verrai scollegato.</string>
-    <string name="failed_save_data">Qualcosa è andato storto nel salvataggio dei tuoi dati</string>
+    <string name="failed_save_picture">Qualcosa è andato storto nel salvataggio della tua foto profilo.\nPer favore, controlla la connessione ad internet.</string>
     <string name="fui_name_hint">Nome utente</string>
     <string name="hint_author">Autore</string>
     <string name="hint_condition">Condizioni del libro</string>

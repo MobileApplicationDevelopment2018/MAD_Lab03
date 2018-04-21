@@ -10,7 +10,14 @@ import android.view.MenuInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
+import com.algolia.instantsearch.helpers.InstantSearch;
+import com.algolia.instantsearch.helpers.Searcher;
+
+import it.polito.mad.mad2018.data.Constants;
+
 public class ExploreFragment extends Fragment {
+
+    private Searcher searcher;
 
     public ExploreFragment() {
         // Required empty public constructor
@@ -29,6 +36,22 @@ public class ExploreFragment extends Fragment {
         if (getArguments() != null) {
 
         }
+    }
+
+    @Override
+    public void onStart() {
+        super.onStart();
+
+        searcher = Searcher.create(Constants.ALGOLIA_APP_ID, Constants.ALGOLIA_SEARCH_API_KEY,
+                Constants.ALGOLIA_INDEX_NAME);
+        InstantSearch helper = new InstantSearch(this.getActivity(), searcher);
+        helper.search();
+    }
+
+    @Override
+    public void onStop() {
+        super.onStop();
+        searcher.destroy();
     }
 
     @Override

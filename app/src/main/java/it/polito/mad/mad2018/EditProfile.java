@@ -31,13 +31,8 @@ import com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions;
 import com.bumptech.glide.signature.ObjectKey;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
-import com.google.android.gms.tasks.Task;
-import com.google.android.gms.tasks.Tasks;
 
 import java.io.File;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
 
 import it.polito.mad.mad2018.data.UserProfile;
 import it.polito.mad.mad2018.utils.AppCompatActivityDialog;
@@ -144,7 +139,8 @@ public class EditProfile extends AppCompatActivityDialog<EditProfile.DialogID> {
     protected void onDestroy() {
         super.onDestroy();
 
-        if (isFinishing() && currentProfile.getLocalImagePath() != null) {
+        if (isFinishing() && currentProfile.isLocalImageToBeDeleted() &&
+                currentProfile.getLocalImagePath() != null) {
             File tmpImageFile = new File(currentProfile.getLocalImagePath());
             tmpImageFile.deleteOnExit();
         }
@@ -204,32 +200,21 @@ public class EditProfile extends AppCompatActivityDialog<EditProfile.DialogID> {
                             .getExternalFilesDir(Environment.DIRECTORY_PICTURES), IMAGE_PATH_TMP);
 
                     if (imageFileCamera.exists()) {
-                        currentProfile.setProfilePicture(imageFileCamera.getAbsolutePath());
+                        currentProfile.setProfilePicture(imageFileCamera.getAbsolutePath(), true);
                         loadImageProfile(currentProfile);
                     }
                     break;
 
                 case GALLERY:
                     if (data != null && data.getData() != null) {
-
-                        // Move the image to a temporary location
-                        File imageFileGallery = new File(this.getApplicationContext()
-                                .getExternalFilesDir(Environment.DIRECTORY_PICTURES), IMAGE_PATH_TMP);
-                        try {
-                            Utilities.copyFile(new File(Utilities.getRealPathFromURI(this,
-                                    data.getData())), imageFileGallery);
-                        } catch (IOException e) {
-                            this.openDialog(DialogID.DIALOG_ERROR_FAILED_OBTAIN_PICTURE, true);
-                        }
-
-                        currentProfile.setProfilePicture(imageFileGallery.getAbsolutePath());
+                        currentProfile.setProfilePicture(
+                                Utilities.getRealPathFromURI(this, data.getData()), false);
                         loadImageProfile(currentProfile);
                     }
                     break;
 
                 default:
                     super.onActivityResult(requestCode, resultCode, data);
-
             }
         }
     }
@@ -294,26 +279,23 @@ public class EditProfile extends AppCompatActivityDialog<EditProfile.DialogID> {
 
         if (originalProfile == null || originalProfile.profileUpdated(currentProfile)) {
 
-            OnSuccessListener<List<?>> onSuccess = t -> {
-                isCommitting = false;
-                currentProfile.postCommit();
-                Intent intent = new Intent(getApplicationContext(), ShowProfileFragment.class);
-                intent.putExtra(UserProfile.PROFILE_INFO_KEY, currentProfile);
-                setResult(RESULT_OK, intent);
-                finish();
-            };
-            OnFailureListener onFailure = t -> {
-                isCommitting = false;
-                this.openDialog(DialogID.DIALOG_ERROR_FAILED_SAVE_DATA, true);
-            };
-
-            this.isCommitting = true;
-            this.openDialog(DialogID.DIALOG_SAVING, false);
-
             // A new profile picture has to be uploaded: it is prepared in background
             // and then it is uploaded to firebase and the other changes are committed
             if (currentProfile.imageUpdated(originalProfile) && currentProfile.hasProfilePicture()) {
+                this.isCommitting = true;
+                this.openDialog(DialogID.DIALOG_SAVING, false);
+
                 pictureProcessingTask = currentProfile.processProfilePictureAsync(picture -> {
+
+                    OnSuccessListener<Object> onSuccess = t -> {
+                        isCommitting = false;
+                        currentProfile.saveToFirebase(this.getResources());
+                        this.onChangesCommitted();
+                    };
+                    OnFailureListener onFailure = t -> {
+                        isCommitting = false;
+                        this.openDialog(DialogID.DIALOG_ERROR_FAILED_SAVE_DATA, true);
+                    };
 
                     if (picture == null) {
                         onFailure.onFailure(new Exception());
@@ -321,33 +303,33 @@ public class EditProfile extends AppCompatActivityDialog<EditProfile.DialogID> {
                     }
 
                     currentProfile.setProfilePictureThumbnail(picture.getThumbnail());
-
-                    List<Task<?>> tasks = new ArrayList<>();
-                    tasks.add(currentProfile.saveToFirebase(this.getResources()));
-                    tasks.add(currentProfile.uploadProfilePictureToFirebase(picture.getPicture()));
-                    Tasks.whenAllSuccess(tasks)
+                    currentProfile.uploadProfilePictureToFirebase(picture.getPicture())
                             .addOnSuccessListener(this, onSuccess)
                             .addOnFailureListener(this, onFailure);
-
                 });
             }
 
             // Otherwise, there is no need for the asynchronous pre-processing phase
             else {
-                List<Task<?>> tasks = new ArrayList<>();
-                tasks.add(currentProfile.saveToFirebase(this.getResources()));
+                currentProfile.saveToFirebase(this.getResources());
                 if (currentProfile.imageUpdated(originalProfile) && !currentProfile.hasProfilePicture()) {
-                    tasks.add(currentProfile.deleteProfilePictureFromFirebase());
+                    currentProfile.deleteProfilePictureFromFirebase();
                 }
-                Tasks.whenAllSuccess(tasks)
-                        .addOnSuccessListener(this, onSuccess)
-                        .addOnFailureListener(this, onFailure);
+
+                this.onChangesCommitted();
             }
 
         } else {
             setResult(RESULT_CANCELED);
             finish();
         }
+    }
+
+    private void onChangesCommitted() {
+        Intent intent = new Intent(getApplicationContext(), MainActivity.class);
+        intent.putExtra(UserProfile.PROFILE_INFO_KEY, currentProfile);
+        setResult(RESULT_OK, intent);
+        finish();
     }
 
     private void fillViews(UserProfile profile) {
@@ -412,7 +394,7 @@ public class EditProfile extends AppCompatActivityDialog<EditProfile.DialogID> {
                 break;
 
             case DIALOG_ERROR_FAILED_SAVE_DATA:
-                dialogInstance = Utilities.openErrorDialog(this, R.string.failed_save_data);
+                dialogInstance = Utilities.openErrorDialog(this, R.string.failed_save_picture);
                 break;
 
             case DIALOG_ERROR_FAILED_OBTAIN_PICTURE:

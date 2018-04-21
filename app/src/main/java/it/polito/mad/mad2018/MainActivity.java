@@ -39,6 +39,7 @@ import it.polito.mad.mad2018.utils.Utilities;
 
 public class MainActivity extends AppCompatActivityDialog<MainActivity.DialogID>
         implements NavigationView.OnNavigationItemSelectedListener {
+
     private static final int RC_SIGN_IN = 1;
     private static final int RC_EDIT_PROFILE = 5;
     private static final int RC_EDIT_PROFILE_WELCOME = 6;
@@ -70,16 +71,11 @@ public class MainActivity extends AppCompatActivityDialog<MainActivity.DialogID>
             localProfile = (UserProfile) savedInstanceState.getSerializable(UserProfile.PROFILE_INFO_KEY);
         }
 
-        // Profile to be obtained from database
-        if (localProfile == null) {
-            localProfile = new UserProfile();
-        }
-
+        // User not signed-in
         if (firebaseAuth.getCurrentUser() == null) {
             this.signIn();
         }
 
-        updateNavigationView();
         if (savedInstanceState == null) {
             showDefaultFragment();
         }
@@ -89,7 +85,7 @@ public class MainActivity extends AppCompatActivityDialog<MainActivity.DialogID>
     protected void onStart() {
         super.onStart();
 
-        if (localProfile.isAnonymous() && firebaseAuth.getCurrentUser() != null) {
+        if (localProfile == null && firebaseAuth.getCurrentUser() != null) {
             setOnProfileLoadedListener();
         }
     }
@@ -119,17 +115,12 @@ public class MainActivity extends AppCompatActivityDialog<MainActivity.DialogID>
 
     @Override
     public boolean onNavigationItemSelected(@NonNull MenuItem item) {
-        // Handle navigation view item clicks here.
 
         int id = item.getItemId();
 
         switch (id) {
             case R.id.nav_explore:
                 this.replaceFragment(ExploreFragment.newInstance());
-                break;
-
-            case R.id.nav_sign_in:
-                signIn();
                 break;
 
             case R.id.nav_add_book:
@@ -173,24 +164,24 @@ public class MainActivity extends AppCompatActivityDialog<MainActivity.DialogID>
                     return;
                 }
 
-                showDefaultFragment();
-
                 if (response == null) {
-                    showToast(R.string.sign_in_cancelled);
+                    finish();
                     return;
                 }
 
                 if (response.getError() != null && response.getError().getErrorCode() == ErrorCodes.NO_NETWORK) {
                     showToast(R.string.sign_in_no_internet_connection);
-                    return;
+                } else {
+                    showToast(R.string.sign_in_unknown_error);
                 }
 
-                showToast(R.string.sign_in_unknown_error);
+                signIn();
                 break;
 
             case RC_EDIT_PROFILE:
                 if (resultCode == RESULT_OK) {
                     localProfile = (UserProfile) data.getSerializableExtra(UserProfile.PROFILE_INFO_KEY);
+                    localProfile.postCommit();
                     updateNavigationView(); // Need to update the drawer information
                     this.replaceFragment(ShowProfileFragment.newInstance(localProfile));
                 }
@@ -199,6 +190,8 @@ public class MainActivity extends AppCompatActivityDialog<MainActivity.DialogID>
             case RC_EDIT_PROFILE_WELCOME:
                 if (resultCode == RESULT_OK) {
                     localProfile = (UserProfile) data.getSerializableExtra(UserProfile.PROFILE_INFO_KEY);
+                    localProfile.postCommit();
+                    updateNavigationView(); // Need to update the drawer information
                 }
                 break;
 
@@ -219,19 +212,9 @@ public class MainActivity extends AppCompatActivityDialog<MainActivity.DialogID>
         ImageView profilePicture = header.findViewById(R.id.nh_profile_picture);
         TextView username = header.findViewById(R.id.nh_username);
         TextView email = header.findViewById(R.id.nh_email);
-        drawer.getMenu().clear();
 
-        if (!localProfile.isAnonymous()) {
-            username.setText(localProfile.getUsername());
-            email.setVisibility(View.VISIBLE);
-            email.setText(localProfile.getEmail());
-            drawer.inflateMenu(R.menu.activity_main_drawer_signed_in);
-        } else {
-            username.setText(R.string.anonymous);
-            email.setVisibility(View.INVISIBLE);
-            email.setText("");
-            drawer.inflateMenu(R.menu.activity_main_drawer);
-        }
+        username.setText(localProfile.getUsername());
+        email.setText(localProfile.getEmail());
 
         GlideRequest<Drawable> thumbnail = GlideApp
                 .with(this)
@@ -247,16 +230,12 @@ public class MainActivity extends AppCompatActivityDialog<MainActivity.DialogID>
                 .apply(RequestOptions.circleCropTransform())
                 .into(profilePicture);
 
-        drawer.getMenu().findItem(R.id.nav_explore).setChecked(true);
-        drawer.getHeaderView(0)
-                .findViewById(R.id.nh_profile_picture)
+        profilePicture
                 .setOnClickListener(v -> {
-                    if (!localProfile.isAnonymous()) {
-                        DrawerLayout dr = findViewById(R.id.drawer_layout);
-                        drawer.getMenu().findItem(R.id.nav_profile);
-                        replaceFragment(ShowProfileFragment.newInstance(localProfile));
-                        dr.closeDrawer(GravityCompat.START);
-                    }
+                    replaceFragment(ShowProfileFragment.newInstance(localProfile));
+                    DrawerLayout drawerLayout = findViewById(R.id.drawer_layout);
+                    drawerLayout.closeDrawer(GravityCompat.START);
+                    drawer.getMenu().findItem(R.id.nav_profile);
                 });
     }
 
@@ -279,10 +258,9 @@ public class MainActivity extends AppCompatActivityDialog<MainActivity.DialogID>
     }
 
     private void onSignOut() {
-        localProfile = new UserProfile();
-        signIn();
-        updateNavigationView();
+        localProfile = null;
         showDefaultFragment();
+        signIn();
     }
 
     private void showToast(@StringRes int message) {
@@ -315,7 +293,6 @@ public class MainActivity extends AppCompatActivityDialog<MainActivity.DialogID>
                 return;
             }
             openDialog(DialogID.DIALOG_ERROR_RETRIEVE_DIALOG, true);
-            signOut();
         });
     }
 
@@ -351,7 +328,7 @@ public class MainActivity extends AppCompatActivityDialog<MainActivity.DialogID>
 
     private void showDefaultFragment() {
         NavigationView drawer = findViewById(R.id.nav_view);
-        drawer.getMenu().getItem(0).setChecked(true);
+        drawer.getMenu().findItem(R.id.nav_explore).setChecked(true);
         replaceFragment(ExploreFragment.newInstance());
     }
 
@@ -372,7 +349,9 @@ public class MainActivity extends AppCompatActivityDialog<MainActivity.DialogID>
                         getString(R.string.fui_progress_dialog_loading), true);
                 break;
             case DIALOG_ERROR_RETRIEVE_DIALOG:
-                dialog = Utilities.openErrorDialog(this, R.string.failed_load_data);
+                dialog = Utilities.openErrorDialog(this,
+                        R.string.failed_load_data,
+                        (dlg, which) -> signOut());
                 break;
         }
 

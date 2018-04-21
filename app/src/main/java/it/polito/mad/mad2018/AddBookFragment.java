@@ -27,6 +27,7 @@ import android.widget.Spinner;
 import android.widget.Toast;
 
 import com.google.android.gms.common.api.CommonStatusCodes;
+import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.vision.barcode.Barcode;
 import com.google.api.services.books.model.Volume;
 import com.google.api.services.books.model.Volumes;
@@ -172,11 +173,12 @@ public class AddBookFragment extends FragmentDialog<AddBookFragment.DialogID> im
         } else if (volumes.getTotalItems() == 0 || volumes.getItems() == null) {
             Toast.makeText(getContext(), getResources().getString(R.string.add_book_isbn_query_no_results), Toast.LENGTH_LONG).show();
         } else {
-            Toast.makeText(getContext(), R.string.add_book_query_ok, Toast.LENGTH_LONG).show();
+            Toast.makeText(getContext(), R.string.add_book_query_ok, Toast.LENGTH_SHORT).show();
 
             final Volume.VolumeInfo volumeInfo = volumes.getItems().get(0).getVolumeInfo();
             Book book = new Book(isbnEdit.getText().toString(), volumeInfo, currentLocale);
             fillViews(book);
+            addBookBtn.requestFocus();
         }
     }
 
@@ -236,7 +238,7 @@ public class AddBookFragment extends FragmentDialog<AddBookFragment.DialogID> im
 
                     processPicture(Utilities.getRealPathFromURI(getActivity(), data.getData()));
 
-                }  else {
+                } else {
                     Toast.makeText(getContext(), R.string.operation_aborted, Toast.LENGTH_LONG).show();
                 }
                 break;
@@ -312,15 +314,27 @@ public class AddBookFragment extends FragmentDialog<AddBookFragment.DialogID> im
 
     private void uploadBook(ByteArrayOutputStream picture) {
         openDialog(DialogID.DIALOG_SAVING, true);
-        book.saveToFirebase(picture)
-                .addOnCompleteListener(v -> closeDialog())
-                .addOnSuccessListener(v -> {
-                    Toast.makeText(getContext(), getResources().getString(R.string.add_book_saved), Toast.LENGTH_LONG).show();
-                    clearViews(true);
-                })
-                .addOnFailureListener(v ->
-                        Toast.makeText(getContext(), getResources().getString(R.string.add_book_error),
-                        Toast.LENGTH_LONG).show());
+
+        OnFailureListener onFailure = v -> {
+            this.closeDialog();
+            Toast.makeText(getContext(), getResources().getString(R.string.add_book_error),
+                    Toast.LENGTH_LONG).show();
+        };
+
+        book.saveToAlgolia((obj, e) -> {
+            if (e != null) {
+                onFailure.onFailure(e);
+                return;
+            }
+
+            book.saveToFirebase(picture)
+                    .addOnCompleteListener(v -> closeDialog())
+                    .addOnSuccessListener(v -> {
+                        Toast.makeText(getContext(), getResources().getString(R.string.add_book_saved), Toast.LENGTH_LONG).show();
+                        clearViews(true);
+                    })
+                    .addOnFailureListener(onFailure);
+        });
     }
 
     private void findViews(View view) {
