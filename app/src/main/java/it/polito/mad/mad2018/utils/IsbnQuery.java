@@ -2,10 +2,8 @@ package it.polito.mad.mad2018.utils;
 
 import android.content.Context;
 import android.net.ConnectivityManager;
-import android.net.NetworkInfo;
 import android.os.AsyncTask;
-import android.support.v4.app.Fragment;
-import android.util.Log;
+import android.support.annotation.NonNull;
 
 import com.google.api.client.http.apache.ApacheHttpTransport;
 import com.google.api.client.json.JsonFactory;
@@ -15,14 +13,28 @@ import com.google.api.services.books.Books.Volumes.List;
 import com.google.api.services.books.model.Volumes;
 
 import java.io.IOException;
+import java.lang.ref.WeakReference;
+
+import it.polito.mad.mad2018.R;
 
 public class IsbnQuery extends AsyncTask<String, Object, Volumes> {
 
-    private TaskListener mListener;
-    private ConnectivityManager mConnectivityManager;
+    private final WeakReference<Context> context;
+    private final WeakReference<TaskListener> listener;
 
-    public IsbnQuery(TaskListener listener) {
-        mListener = listener;
+    public IsbnQuery(@NonNull Context context, @NonNull TaskListener listener) {
+        this.context = new WeakReference<>(context);
+        this.listener = new WeakReference<>(listener);
+    }
+
+    private static boolean isNetworkConnected(@NonNull Context context) {
+
+        ConnectivityManager connectivityManager =
+                (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
+
+        return connectivityManager != null &&
+                connectivityManager.getActiveNetworkInfo() != null &&
+                connectivityManager.getActiveNetworkInfo().isConnected();
     }
 
     @Override
@@ -33,8 +45,8 @@ public class IsbnQuery extends AsyncTask<String, Object, Volumes> {
 
         JsonFactory jsonFactory = JacksonFactory.getDefaultInstance();
 
-        final Books booksClient;
-        booksClient = new Books.Builder(new ApacheHttpTransport(), jsonFactory, null).build();
+        final Books booksClient = new Books.Builder(
+                new ApacheHttpTransport(), jsonFactory, null).build();
 
         List volumesList;
         Volumes volumes;
@@ -53,32 +65,41 @@ public class IsbnQuery extends AsyncTask<String, Object, Volumes> {
     @Override
     protected void onPreExecute() {
 
-        mListener.onTaskStarted();
-        if (!isNetworkConnected()) {
-            Log.i(getClass().getName(), "No internet connection");
-            cancel(true);
+        super.onPreExecute();
+        Context context = this.context.get();
+        TaskListener listener = this.listener.get();
+        if (context != null && listener != null) {
+            if (!isNetworkConnected(context)) {
+                cancel(true);
+            } else {
+                listener.onTaskStarted();
+            }
         }
     }
 
     @Override
     protected void onPostExecute(Volumes volumes) {
-        mListener.onTaskFinished(volumes);
+
+        TaskListener listener = this.listener.get();
+        if (listener != null) {
+            listener.onTaskFinished(volumes);
+        }
     }
 
-    private boolean isNetworkConnected() {
+    @Override
+    protected void onCancelled() {
 
-        if (mConnectivityManager == null)
-            mConnectivityManager = (ConnectivityManager) ((Fragment) mListener).getActivity().getSystemService(Context.CONNECTIVITY_SERVICE);
-
-        assert mConnectivityManager != null;
-        NetworkInfo networkInfo = mConnectivityManager.getActiveNetworkInfo();
-        return networkInfo != null && networkInfo.isConnected();
+        super.onCancelled();
+        TaskListener listener = this.listener.get();
+        if(listener != null) {
+            listener.onTaskCancelled(context.get().getResources().getString(R.string.error_no_internet));
+        }
     }
 
     public interface TaskListener {
         void onTaskStarted();
-
         void onTaskFinished(Volumes result);
+        void onTaskCancelled(String msg);
     }
 }
 
