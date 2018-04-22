@@ -8,11 +8,13 @@ import android.util.Log;
 import com.algolia.search.saas.Client;
 import com.algolia.search.saas.CompletionHandler;
 import com.algolia.search.saas.Index;
+import com.firebase.ui.database.FirebaseRecyclerOptions;
 import com.google.android.gms.tasks.Task;
 import com.google.android.gms.tasks.Tasks;
 import com.google.api.services.books.model.Volume;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 import com.google.firebase.storage.FirebaseStorage;
@@ -39,7 +41,6 @@ public class Book implements Serializable {
     public static final int BOOK_PICTURE_QUALITY = 50;
 
     private static final String FIREBASE_BOOKS_KEY = "books";
-    private static final String FIREBASE_DATA_KEY = "data";
     private static final String FIREBASE_STORAGE_BOOKS_FOLDER = "books";
     private static final String FIREBASE_STORAGE_IMAGE_NAME = "picture";
 
@@ -110,7 +111,6 @@ public class Book implements Serializable {
         return FirebaseDatabase.getInstance().getReference()
                 .child(FIREBASE_BOOKS_KEY)
                 .child(bookId)
-                .child(FIREBASE_DATA_KEY)
                 .addValueEventListener(listener);
     }
 
@@ -123,8 +123,28 @@ public class Book implements Serializable {
         FirebaseDatabase.getInstance().getReference()
                 .child(FIREBASE_BOOKS_KEY)
                 .child(bookId)
-                .child(FIREBASE_DATA_KEY)
                 .removeEventListener(listener);
+    }
+
+    public static FirebaseRecyclerOptions<Book> getBooksLocalUser() {
+        return getBooksByUser(UserProfile.getCurrentUserId());
+    }
+
+    public static FirebaseRecyclerOptions<Book> getBooksByUser(@NonNull String userId) {
+
+        DatabaseReference keyQuery = UserProfile.getOwnedBooksReference(userId);
+        DatabaseReference dataRef = FirebaseDatabase.getInstance().getReference()
+                .child(FIREBASE_BOOKS_KEY);
+
+        return new FirebaseRecyclerOptions.Builder<Book>()
+                .setIndexedQuery(keyQuery, dataRef,
+                        snapshot -> {
+                            String bookId = snapshot.getKey();
+                            Data data = snapshot.getValue(Data.class);
+                            assert data != null;
+                            return new Book(bookId, data);
+                        })
+                .build();
     }
 
     private static String generateBookId() {
@@ -203,7 +223,6 @@ public class Book implements Serializable {
         tasks.add(FirebaseDatabase.getInstance().getReference()
                 .child(FIREBASE_BOOKS_KEY)
                 .child(bookId)
-                .child(FIREBASE_DATA_KEY)
                 .setValue(this.data));
 
         tasks.add(FirebaseDatabase.getInstance().getReference()

@@ -10,6 +10,7 @@ import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.auth.UserInfo;
+import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 import com.google.firebase.storage.FirebaseStorage;
@@ -38,11 +39,17 @@ public class UserProfile implements Serializable {
     private static final int PROFILE_PICTURE_THUMBNAIL_SIZE = 64;
     private static final int PROFILE_PICTURE_QUALITY = 50;
 
+    private final String uid;
     private final Data data;
     private boolean localImageToBeDeleted;
     private String localImagePath;
 
     public UserProfile(@NonNull Data data, @NonNull Resources resources) {
+        this(getCurrentUserId(), data, resources);
+    }
+
+    public UserProfile(@NonNull String uid, @NonNull Data data, @NonNull Resources resources) {
+        this.uid = uid;
         this.data = data;
         this.localImageToBeDeleted = false;
         this.localImagePath = null;
@@ -50,46 +57,49 @@ public class UserProfile implements Serializable {
     }
 
     public UserProfile(@NonNull UserProfile other) {
+        this.uid = other.uid;
         this.data = new Data(other.data);
         this.localImageToBeDeleted = false;
         this.localImagePath = null;
     }
 
-    public UserProfile(FirebaseUser user, @NonNull Resources resources) {
+    public UserProfile(@NonNull FirebaseUser user, @NonNull Resources resources) {
+        this.uid = user.getUid();
         this.data = new Data();
         this.localImageToBeDeleted = false;
         this.localImagePath = null;
 
-        if (user != null) {
-            this.data.profile.email = user.getEmail();
-            this.data.profile.username = user.getDisplayName();
+        this.data.profile.email = user.getEmail();
+        this.data.profile.username = user.getDisplayName();
 
-            for (UserInfo profile : user.getProviderData()) {
-                if (this.data.profile.username == null && profile.getDisplayName() != null) {
-                    this.data.profile.username = profile.getDisplayName();
-                }
+        for (UserInfo profile : user.getProviderData()) {
+            if (this.data.profile.username == null && profile.getDisplayName() != null) {
+                this.data.profile.username = profile.getDisplayName();
             }
-
-            if (this.data.profile.username == null) {
-                this.data.profile.username = getUsernameFromEmail(this.data.profile.email);
-
-            }
-
-            this.data.profile.username = Utilities.trimString(this.data.profile.username, resources.getInteger(R.integer.max_length_username));
-            this.data.profile.location = resources.getString(R.string.default_city);
         }
+
+        if (this.data.profile.username == null) {
+            this.data.profile.username = getUsernameFromEmail(this.data.profile.email);
+
+        }
+
+        this.data.profile.username = Utilities.trimString(this.data.profile.username, resources.getInteger(R.integer.max_length_username));
+        this.data.profile.location = resources.getString(R.string.default_city);
     }
 
     private static String getUsernameFromEmail(@NonNull String email) {
         return email.substring(0, email.indexOf('@'));
     }
 
-    public static ValueEventListener setOnProfileLoadedListener(@NonNull ValueEventListener listener) {
-
+    public static String getCurrentUserId() {
         FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
         assert currentUser != null;
 
-        return setOnProfileLoadedListener(currentUser.getUid(), listener);
+        return currentUser.getUid();
+    }
+
+    public static ValueEventListener setOnProfileLoadedListener(@NonNull ValueEventListener listener) {
+        return setOnProfileLoadedListener(getCurrentUserId(), listener);
     }
 
     public static ValueEventListener setOnProfileLoadedListener(@NonNull String userId,
@@ -103,11 +113,7 @@ public class UserProfile implements Serializable {
     }
 
     public static void unsetOnProfileLoadedListener(@NonNull ValueEventListener listener) {
-
-        FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
-        assert currentUser != null;
-
-        unsetOnProfileLoadedListener(currentUser.getUid(), listener);
+        unsetOnProfileLoadedListener(getCurrentUserId(), listener);
     }
 
     public static void unsetOnProfileLoadedListener(@NonNull String userId,
@@ -118,6 +124,14 @@ public class UserProfile implements Serializable {
                 .child(userId)
                 .child(FIREBASE_DATA_KEY)
                 .removeEventListener(listener);
+    }
+
+    public static DatabaseReference getOwnedBooksReference(@NonNull String userId) {
+        return FirebaseDatabase.getInstance().getReference()
+                .child(FIREBASE_USERS_KEY)
+                .child(userId)
+                .child(FIREBASE_DATA_KEY)
+                .child(FIREBASE_BOOKS_KEY);
     }
 
     public void setProfilePicture(String path, boolean toBeDeleted) {
@@ -188,12 +202,9 @@ public class UserProfile implements Serializable {
     }
 
     private StorageReference getProfilePictureReferenceFirebase() {
-        FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
-        assert currentUser != null;
-
         return FirebaseStorage.getInstance().getReference()
                 .child(FIREBASE_STORAGE_USERS_FOLDER)
-                .child(currentUser.getUid())
+                .child(this.uid)
                 .child(FIREBASE_STORAGE_IMAGE_NAME);
     }
 
@@ -236,8 +247,7 @@ public class UserProfile implements Serializable {
 
     public boolean isLocal() {
         FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
-        return user == null || user.getEmail() == null ||
-                user.getEmail().equals(this.data.profile.email);
+        return user == null || user.getUid().equals(this.uid);
 
     }
 
@@ -251,12 +261,9 @@ public class UserProfile implements Serializable {
     public Task<Void> saveToFirebase(@NonNull Resources resources) {
         this.trimFields(resources);
 
-        FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
-        assert currentUser != null;
-
         return FirebaseDatabase.getInstance().getReference()
                 .child(FIREBASE_USERS_KEY)
-                .child(currentUser.getUid())
+                .child(this.uid)
                 .child(FIREBASE_DATA_KEY)
                 .child(FIREBASE_PROFILE_KEY)
                 .setValue(this.data.profile);
