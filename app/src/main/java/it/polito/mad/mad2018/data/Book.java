@@ -8,12 +8,15 @@ import android.util.Log;
 import com.algolia.search.saas.Client;
 import com.algolia.search.saas.CompletionHandler;
 import com.algolia.search.saas.Index;
+import com.firebase.ui.database.FirebaseRecyclerOptions;
 import com.google.android.gms.tasks.Task;
 import com.google.android.gms.tasks.Tasks;
 import com.google.api.services.books.model.Volume;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageMetadata;
 import com.google.firebase.storage.StorageReference;
@@ -38,15 +41,15 @@ public class Book implements Serializable {
     public static final int BOOK_PICTURE_QUALITY = 50;
 
     private static final String FIREBASE_BOOKS_KEY = "books";
-    private static final String FIREBASE_DATA_KEY = "data";
     private static final String FIREBASE_STORAGE_BOOKS_FOLDER = "books";
     private static final String FIREBASE_STORAGE_IMAGE_NAME = "picture";
 
+    private final String bookId;
     private final Book.Data data;
-    private String bookId;
+    private UserProfile owner;
 
-    public Book(@NonNull String bid, @NonNull Data data) {
-        this.bookId = bid;
+    public Book(@NonNull String bookId, @NonNull Data data) {
+        this.bookId = bookId;
         this.data = data;
     }
 
@@ -102,6 +105,48 @@ public class Book implements Serializable {
         }
     }
 
+    public static ValueEventListener setOnBookLoadedListener(@NonNull String bookId,
+                                                             @NonNull ValueEventListener listener) {
+
+        return FirebaseDatabase.getInstance().getReference()
+                .child(FIREBASE_BOOKS_KEY)
+                .child(bookId)
+                .addValueEventListener(listener);
+    }
+
+    public static void unsetOnBookLoadedListener(@NonNull String bookId,
+                                                 @NonNull ValueEventListener listener) {
+
+        FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
+        assert currentUser != null;
+
+        FirebaseDatabase.getInstance().getReference()
+                .child(FIREBASE_BOOKS_KEY)
+                .child(bookId)
+                .removeEventListener(listener);
+    }
+
+    public static FirebaseRecyclerOptions<Book> getBooksLocalUser() {
+        return getBooksByUser(UserProfile.getCurrentUserId());
+    }
+
+    public static FirebaseRecyclerOptions<Book> getBooksByUser(@NonNull String userId) {
+
+        DatabaseReference keyQuery = UserProfile.getOwnedBooksReference(userId);
+        DatabaseReference dataRef = FirebaseDatabase.getInstance().getReference()
+                .child(FIREBASE_BOOKS_KEY);
+
+        return new FirebaseRecyclerOptions.Builder<Book>()
+                .setIndexedQuery(keyQuery, dataRef,
+                        snapshot -> {
+                            String bookId = snapshot.getKey();
+                            Data data = snapshot.getValue(Data.class);
+                            assert data != null;
+                            return new Book(bookId, data);
+                        })
+                .build();
+    }
+
     private static String generateBookId() {
         return FirebaseDatabase.getInstance().getReference()
                 .child(FIREBASE_BOOKS_KEY).push().getKey();
@@ -147,7 +192,19 @@ public class Book implements Serializable {
         return this.data.bookInfo.tags;
     }
 
-    private StorageReference getBookPictureReference() {
+    public String getOwnerID() {
+        return this.data.uid;
+    }
+
+    public UserProfile getOwner() {
+        return owner;
+    }
+
+    public void setOwner(UserProfile owner) {
+        this.owner = owner;
+    }
+
+    public StorageReference getBookPictureReference() {
         assert this.bookId != null;
         return FirebaseStorage.getInstance().getReference()
                 .child(FIREBASE_STORAGE_BOOKS_FOLDER)
@@ -156,10 +213,6 @@ public class Book implements Serializable {
     }
 
     public Task<?> saveToFirebase() {
-        return saveToFirebase(null);
-    }
-
-    public Task<?> saveToFirebase(ByteArrayOutputStream picture) {
         FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
         assert currentUser != null;
 
@@ -170,7 +223,6 @@ public class Book implements Serializable {
         tasks.add(FirebaseDatabase.getInstance().getReference()
                 .child(FIREBASE_BOOKS_KEY)
                 .child(bookId)
-                .child(FIREBASE_DATA_KEY)
                 .setValue(this.data));
 
         tasks.add(FirebaseDatabase.getInstance().getReference()
@@ -181,16 +233,16 @@ public class Book implements Serializable {
                 .child(bookId)
                 .setValue(true));
 
-        if (picture != null) {
-            StorageMetadata metadata = new StorageMetadata.Builder()
-                    .setContentType(PictureUtilities.IMAGE_CONTENT_TYPE_UPLOAD)
-                    .build();
-
-            tasks.add(getBookPictureReference()
-                    .putBytes(picture.toByteArray(), metadata));
-        }
-
         return Tasks.whenAllSuccess(tasks);
+    }
+
+    public Task<?> savePictureToFirebase(ByteArrayOutputStream picture) {
+        StorageMetadata metadata = new StorageMetadata.Builder()
+                .setContentType(PictureUtilities.IMAGE_CONTENT_TYPE_UPLOAD)
+                .build();
+
+        return getBookPictureReference()
+                .putBytes(picture.toByteArray(), metadata);
     }
 
     public void saveToAlgolia(CompletionHandler completionHandler) {

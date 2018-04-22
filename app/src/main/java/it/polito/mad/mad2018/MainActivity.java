@@ -2,6 +2,7 @@ package it.polito.mad.mad2018;
 
 import android.app.Dialog;
 import android.app.ProgressDialog;
+import android.content.Context;
 import android.content.Intent;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
@@ -16,6 +17,7 @@ import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.widget.Toolbar;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -27,6 +29,8 @@ import com.firebase.ui.auth.AuthUI;
 import com.firebase.ui.auth.ErrorCodes;
 import com.firebase.ui.auth.IdpResponse;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.ValueEventListener;
 
 import java.util.Arrays;
@@ -275,29 +279,35 @@ public class MainActivity extends AppCompatActivityDialog<MainActivity.DialogID>
     private void setOnProfileLoadedListener() {
         this.openDialog(DialogID.DIALOG_LOADING, false);
 
-        this.profileListener = UserProfile.setOnProfileLoadedListener(data -> {
-            if (!this.unsetOnProfileLoadedListener()) {
-                return;
-            }
-            closeDialog();
+        this.profileListener = UserProfile.setOnProfileLoadedListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                if (!unsetOnProfileLoadedListener()) {
+                    return;
+                }
+                closeDialog();
 
-            if (data == null) {
-                completeRegistration();
-            } else {
-                localProfile = new UserProfile(data, this.getResources());
-                updateNavigationView();
-                showToast(getString(R.string.sign_in_welcome_back) + " " + localProfile.getUsername());
+                UserProfile.Data data = dataSnapshot.getValue(UserProfile.Data.class);
+                if (data == null) {
+                    completeRegistration();
+                } else {
+                    localProfile = new UserProfile(data, getResources());
+                    updateNavigationView();
+                    showToast(getString(R.string.sign_in_welcome_back) + " " + localProfile.getUsername());
+                }
             }
 
-        }, error -> {
-            if (!this.unsetOnProfileLoadedListener()) {
-                return;
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+                if (!unsetOnProfileLoadedListener()) {
+                    return;
+                }
+                openDialog(DialogID.DIALOG_ERROR_RETRIEVE_DIALOG, true);
             }
-            openDialog(DialogID.DIALOG_ERROR_RETRIEVE_DIALOG, true);
         });
     }
 
-    public boolean unsetOnProfileLoadedListener() {
+    private boolean unsetOnProfileLoadedListener() {
         if (this.profileListener != null) {
             UserProfile.unsetOnProfileLoadedListener(this.profileListener);
             this.profileListener = null;
@@ -320,17 +330,37 @@ public class MainActivity extends AppCompatActivityDialog<MainActivity.DialogID>
         updateNavigationView();
     }
 
-    private void replaceFragment(Fragment instance) {
-        getSupportFragmentManager()
-                .beginTransaction()
-                .replace(R.id.content_frame, instance)
-                .commit();
+    private void replaceFragment(@NonNull Fragment instance) {
+
+        final String fragmentTag = "main_fragment";
+        Fragment oldInstance = getSupportFragmentManager()
+                .findFragmentByTag(fragmentTag);
+
+        if (oldInstance == null || !oldInstance.getClass().equals(instance.getClass())) {
+            getSupportFragmentManager()
+                    .beginTransaction()
+                    .replace(R.id.content_frame, instance, fragmentTag)
+                    .commit();
+
+            hideSoftKeyboard();
+        }
     }
 
     private void showDefaultFragment() {
         NavigationView drawer = findViewById(R.id.nav_view);
         drawer.getMenu().findItem(R.id.nav_explore).setChecked(true);
         replaceFragment(ExploreFragment.newInstance());
+    }
+
+    private void hideSoftKeyboard() {
+        View view = this.getCurrentFocus();
+        if (view != null) {
+            InputMethodManager inputMethodManager =
+                    (InputMethodManager) this.getSystemService(Context.INPUT_METHOD_SERVICE);
+            if (inputMethodManager != null) {
+                inputMethodManager.hideSoftInputFromWindow(view.getWindowToken(), 0);
+            }
+        }
     }
 
     private void showEditProfileActivity(int code) {

@@ -80,6 +80,8 @@
     <string name="rescan">Nuova Scansione</string>
     <string name="add_book_scan">Scannerizza</string>
     <string name="add_book_query_ok">Informazioni ottenute correttamente</string>
+    <string name="add_book_query_failed">Impossibile ottenere le informazioni richieste.</string>
+    <string name="add_book_query_no_results">Nessun risultato trovato</string>
     <string name="add_book_saved">Libro aggiunto correttamente</string>
     <string name="add_book_error">Non sono riuscito ad aggiungere il libro</string>
     <string name="hint_language">Lingua</string>
@@ -93,9 +95,7 @@
     <string name="hint_tags">Tags</string>
     <string name="hint_author_add">Aggiungi autore</string>
     <string name="ab_add_tag">Aggiungi tag</string>
-    <string name="add_book_isbn_query_no_results">Nessun risultato</string>
     <string name="add_book_invalid_isbn">ISBN invalido</string>
-    <string name="add_book_isbn_query_failed">ISBN query fallita</string>
     <string name="would_take_picture">Vorresti aggiungere una foto?</string>
     <string name="take_picture_camera">Si, scatta una foto</string>
     <string name="take_picture_gallery">Si, scegli dalla galleria</string>
