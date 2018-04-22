@@ -39,6 +39,21 @@ public class ExploreFragment extends Fragment {
     }
 
     @Override
+    public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
+                             Bundle savedInstanceState) {
+        setHasOptionsMenu(true);
+        return inflater.inflate(R.layout.fragment_explore, container, false);
+    }
+
+    @Override
+    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
+
+        assert getActivity() != null;
+        getActivity().setTitle(R.string.explore);
+    }
+
+    @Override
     public void onStart() {
         super.onStart();
 
@@ -52,19 +67,6 @@ public class ExploreFragment extends Fragment {
     public void onStop() {
         super.onStop();
         searcher.destroy();
-    }
-
-    @Override
-    public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
-                             Bundle savedInstanceState) {
-        setHasOptionsMenu(true);
-        return inflater.inflate(R.layout.fragment_explore, container, false);
-    }
-
-    @Override
-    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
-        super.onViewCreated(view, savedInstanceState);
-        getActivity().setTitle(R.string.explore);
     }
 
     @Override

@@ -10,8 +10,6 @@ import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.auth.UserInfo;
-import com.google.firebase.database.DataSnapshot;
-import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 import com.google.firebase.storage.FirebaseStorage;
@@ -31,9 +29,8 @@ public class UserProfile implements Serializable {
 
     public static final String FIREBASE_USERS_KEY = "users";
     public static final String FIREBASE_DATA_KEY = "data";
-    private static final String FIREBASE_PROFILE_KEY = "profile";
     public static final String FIREBASE_BOOKS_KEY = "books";
-
+    private static final String FIREBASE_PROFILE_KEY = "profile";
     private static final String FIREBASE_STORAGE_USERS_FOLDER = "users";
     private static final String FIREBASE_STORAGE_IMAGE_NAME = "profile";
 
@@ -87,27 +84,22 @@ public class UserProfile implements Serializable {
         return email.substring(0, email.indexOf('@'));
     }
 
-    public static ValueEventListener setOnProfileLoadedListener(@NonNull OnDataLoadSuccess onSuccess,
-                                                                @NonNull OnDataLoadFailure onFailure) {
+    public static ValueEventListener setOnProfileLoadedListener(@NonNull ValueEventListener listener) {
 
         FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
         assert currentUser != null;
 
+        return setOnProfileLoadedListener(currentUser.getUid(), listener);
+    }
+
+    public static ValueEventListener setOnProfileLoadedListener(@NonNull String userId,
+                                                                @NonNull ValueEventListener listener) {
+
         return FirebaseDatabase.getInstance().getReference()
                 .child(FIREBASE_USERS_KEY)
-                .child(currentUser.getUid())
+                .child(userId)
                 .child(FIREBASE_DATA_KEY)
-                .addValueEventListener(new ValueEventListener() {
-                    @Override
-                    public void onDataChange(DataSnapshot dataSnapshot) {
-                        onSuccess.apply(dataSnapshot.getValue(UserProfile.Data.class));
-                    }
-
-                    @Override
-                    public void onCancelled(DatabaseError databaseError) {
-                        onFailure.apply(databaseError);
-                    }
-                });
+                .addValueEventListener(listener);
     }
 
     public static void unsetOnProfileLoadedListener(@NonNull ValueEventListener listener) {
@@ -115,9 +107,15 @@ public class UserProfile implements Serializable {
         FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
         assert currentUser != null;
 
+        unsetOnProfileLoadedListener(currentUser.getUid(), listener);
+    }
+
+    public static void unsetOnProfileLoadedListener(@NonNull String userId,
+                                                    @NonNull ValueEventListener listener) {
+
         FirebaseDatabase.getInstance().getReference()
                 .child(FIREBASE_USERS_KEY)
-                .child(currentUser.getUid())
+                .child(userId)
                 .child(FIREBASE_DATA_KEY)
                 .removeEventListener(listener);
     }
@@ -264,9 +262,8 @@ public class UserProfile implements Serializable {
                 .setValue(this.data.profile);
     }
 
-    public Task<Void> deleteProfilePictureFromFirebase() {
-        return getProfilePictureReferenceFirebase()
-                .delete();
+    public void deleteProfilePictureFromFirebase() {
+        getProfilePictureReferenceFirebase().delete();
     }
 
     public AsyncTask<Void, Void, PictureUtilities.CompressedImage> processProfilePictureAsync(
@@ -290,15 +287,6 @@ public class UserProfile implements Serializable {
     public void postCommit() {
         this.localImageToBeDeleted = false;
         this.localImagePath = null;
-    }
-
-    public interface OnDataLoadSuccess {
-        void apply(UserProfile.Data data);
-    }
-
-    public interface OnDataLoadFailure {
-
-        void apply(DatabaseError databaseError);
     }
 
     /* Fields need to be public to enable Firebase to access them */

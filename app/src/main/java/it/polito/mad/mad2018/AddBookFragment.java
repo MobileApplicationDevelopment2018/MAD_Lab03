@@ -43,6 +43,7 @@ import java.util.Locale;
 
 import it.polito.mad.mad2018.barcodereader.BarcodeCaptureActivity;
 import it.polito.mad.mad2018.data.Book;
+import it.polito.mad.mad2018.utils.FileUtilities;
 import it.polito.mad.mad2018.utils.FragmentDialog;
 import it.polito.mad.mad2018.utils.IsbnQuery;
 import it.polito.mad.mad2018.utils.PictureUtilities;
@@ -51,7 +52,8 @@ import me.gujun.android.taggroup.TagGroup;
 
 import static android.app.Activity.RESULT_OK;
 
-public class AddBookFragment extends FragmentDialog<AddBookFragment.DialogID> implements IsbnQuery.TaskListener {
+public class AddBookFragment extends FragmentDialog<AddBookFragment.DialogID>
+        implements IsbnQuery.TaskListener {
 
     private static final int CAMERA = 2;
     private static final int GALLERY = 3;
@@ -70,9 +72,10 @@ public class AddBookFragment extends FragmentDialog<AddBookFragment.DialogID> im
     private Spinner yearSpinner, conditionSpinner;
     private Button scanBarcodeBtn, addBookBtn, resetBtn, autocompleteBtn;
     private TagGroup tagGroup, authorEtGroup;
+    private View dummyFocus;
 
-    Book book;
-    boolean fileToBeDeleted;
+    private Book book;
+    private boolean fileToBeDeleted;
     private Locale currentLocale;
 
     public static AddBookFragment newInstance() {
@@ -104,8 +107,9 @@ public class AddBookFragment extends FragmentDialog<AddBookFragment.DialogID> im
             startActivityForResult(intent, RC_BARCODE_CAPTURE);
         });
 
+        assert getContext() != null;
         autocompleteBtn.setOnClickListener(v -> {
-            isbnQuery = new IsbnQuery(this);
+            isbnQuery = new IsbnQuery(getContext(), this);
             isbnQuery.execute(isbnEdit.getText().toString());
         });
 
@@ -169,17 +173,23 @@ public class AddBookFragment extends FragmentDialog<AddBookFragment.DialogID> im
         this.closeDialog();
 
         if (volumes == null) {
-            Toast.makeText(getContext(), getResources().getString(R.string.add_book_isbn_query_failed), Toast.LENGTH_LONG).show();
+            Toast.makeText(getContext(), getResources().getString(R.string.add_book_query_failed), Toast.LENGTH_LONG).show();
         } else if (volumes.getTotalItems() == 0 || volumes.getItems() == null) {
-            Toast.makeText(getContext(), getResources().getString(R.string.add_book_isbn_query_no_results), Toast.LENGTH_LONG).show();
+            Toast.makeText(getContext(), getResources().getString(R.string.add_book_query_no_results), Toast.LENGTH_LONG).show();
         } else {
             Toast.makeText(getContext(), R.string.add_book_query_ok, Toast.LENGTH_SHORT).show();
 
             final Volume.VolumeInfo volumeInfo = volumes.getItems().get(0).getVolumeInfo();
             Book book = new Book(isbnEdit.getText().toString(), volumeInfo, currentLocale);
             fillViews(book);
-            addBookBtn.requestFocus();
+            tagGroup.clearFocus();
+            dummyFocus.requestFocus();
         }
+    }
+
+    @Override
+    public void onNoNetworkConnection() {
+        Toast.makeText(getContext(), R.string.add_book_query_failed, Toast.LENGTH_LONG).show();
     }
 
     @Override
@@ -203,9 +213,10 @@ public class AddBookFragment extends FragmentDialog<AddBookFragment.DialogID> im
                             clearViews(false);
                         }
 
+                        assert getContext() != null;
                         if (Utilities.validateIsbn(barcode.displayValue)) {
                             isbnEdit.setText(barcode.displayValue);
-                            isbnQuery = new IsbnQuery(this);
+                            isbnQuery = new IsbnQuery(getContext(), this);
                             isbnQuery.execute(isbnEdit.getText().toString());
                         }
                     }
@@ -234,10 +245,13 @@ public class AddBookFragment extends FragmentDialog<AddBookFragment.DialogID> im
 
 
             case GALLERY:
-                if (resultCode == RESULT_OK && data != null && data.getData() != null) {
+                String imagePath;
 
-                    processPicture(Utilities.getRealPathFromURI(getActivity(), data.getData()));
+                assert getContext() != null;
+                if (resultCode == RESULT_OK && data != null && data.getData() != null &&
+                        (imagePath = FileUtilities.getRealPathFromUri(getContext(), data.getData())) != null) {
 
+                    processPicture(imagePath);
                 } else {
                     Toast.makeText(getContext(), R.string.operation_aborted, Toast.LENGTH_LONG).show();
                 }
@@ -246,19 +260,6 @@ public class AddBookFragment extends FragmentDialog<AddBookFragment.DialogID> im
             default:
                 super.onActivityResult(requestCode, resultCode, data);
         }
-    }
-
-    private void clearViews(boolean clearIsbn) {
-        if (clearIsbn) {
-            isbnEdit.setText(null);
-        }
-
-        titleEt.setText(null);
-        authorEtGroup.setTags(new LinkedList<>());
-        publisherEt.setText(null);
-        yearSpinner.setSelection(0);
-        languageEt.setText(null);
-        tagGroup.setTags(new LinkedList<>());
     }
 
     private void startBookUpload() {
@@ -357,6 +358,8 @@ public class AddBookFragment extends FragmentDialog<AddBookFragment.DialogID> im
 
         // Tags
         tagGroup = view.findViewById(R.id.tag_group);
+
+        dummyFocus = view.findViewById(R.id.ab_dummy_obtain_focus);
     }
 
     private void fillViews(@NonNull Book book) {
@@ -373,6 +376,21 @@ public class AddBookFragment extends FragmentDialog<AddBookFragment.DialogID> im
         yearSpinner.setSelection(selection);
         languageEt.setText(book.getLanguage());
         tagGroup.setTags(book.getTags());
+    }
+
+    private void clearViews(boolean clearIsbn) {
+        if (clearIsbn) {
+            isbnEdit.setText(null);
+        }
+
+        titleEt.setText(null);
+        authorEtGroup.setTags(new LinkedList<>());
+        publisherEt.setText(null);
+        yearSpinner.setSelection(0);
+        languageEt.setText(null);
+        tagGroup.setTags(new LinkedList<>());
+
+        isbnEdit.requestFocus();
     }
 
     private void fillSpinnerYear(View view) {
@@ -474,6 +492,8 @@ public class AddBookFragment extends FragmentDialog<AddBookFragment.DialogID> im
                             }
                         })
                         .setNeutralButton(R.string.no, (dialog, which) -> uploadBook())
+                        .setOnCancelListener(dialog -> Toast.makeText(getContext(),
+                                getResources().getString(R.string.operation_aborted), Toast.LENGTH_LONG).show())
                         .show();
         }
 

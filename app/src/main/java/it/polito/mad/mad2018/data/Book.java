@@ -14,6 +14,7 @@ import com.google.api.services.books.model.Volume;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageMetadata;
 import com.google.firebase.storage.StorageReference;
@@ -42,11 +43,12 @@ public class Book implements Serializable {
     private static final String FIREBASE_STORAGE_BOOKS_FOLDER = "books";
     private static final String FIREBASE_STORAGE_IMAGE_NAME = "picture";
 
+    private final String bookId;
     private final Book.Data data;
-    private String bookId;
+    private UserProfile owner;
 
-    public Book(@NonNull String bid, @NonNull Data data) {
-        this.bookId = bid;
+    public Book(@NonNull String bookId, @NonNull Data data) {
+        this.bookId = bookId;
         this.data = data;
     }
 
@@ -102,6 +104,29 @@ public class Book implements Serializable {
         }
     }
 
+    public static ValueEventListener setOnBookLoadedListener(@NonNull String bookId,
+                                                             @NonNull ValueEventListener listener) {
+
+        return FirebaseDatabase.getInstance().getReference()
+                .child(FIREBASE_BOOKS_KEY)
+                .child(bookId)
+                .child(FIREBASE_DATA_KEY)
+                .addValueEventListener(listener);
+    }
+
+    public static void unsetOnBookLoadedListener(@NonNull String bookId,
+                                                 @NonNull ValueEventListener listener) {
+
+        FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
+        assert currentUser != null;
+
+        FirebaseDatabase.getInstance().getReference()
+                .child(FIREBASE_BOOKS_KEY)
+                .child(bookId)
+                .child(FIREBASE_DATA_KEY)
+                .removeEventListener(listener);
+    }
+
     private static String generateBookId() {
         return FirebaseDatabase.getInstance().getReference()
                 .child(FIREBASE_BOOKS_KEY).push().getKey();
@@ -147,7 +172,19 @@ public class Book implements Serializable {
         return this.data.bookInfo.tags;
     }
 
-    private StorageReference getBookPictureReference() {
+    public String getOwnerID() {
+        return this.data.uid;
+    }
+
+    public UserProfile getOwner() {
+        return owner;
+    }
+
+    public void setOwner(UserProfile owner) {
+        this.owner = owner;
+    }
+
+    public StorageReference getBookPictureReference() {
         assert this.bookId != null;
         return FirebaseStorage.getInstance().getReference()
                 .child(FIREBASE_STORAGE_BOOKS_FOLDER)

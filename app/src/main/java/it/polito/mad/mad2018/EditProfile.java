@@ -36,6 +36,7 @@ import java.io.File;
 
 import it.polito.mad.mad2018.data.UserProfile;
 import it.polito.mad.mad2018.utils.AppCompatActivityDialog;
+import it.polito.mad.mad2018.utils.FileUtilities;
 import it.polito.mad.mad2018.utils.GlideApp;
 import it.polito.mad.mad2018.utils.GlideRequest;
 import it.polito.mad.mad2018.utils.PictureUtilities;
@@ -86,7 +87,7 @@ public class EditProfile extends AppCompatActivityDialog<EditProfile.DialogID> {
         }
 
         // Set the toolbar
-        final Toolbar toolbar = findViewById(R.id.ep_toolbar);
+        final Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
         if (getSupportActionBar() != null) {
             getSupportActionBar().setDisplayHomeAsUpEnabled(true);
@@ -208,7 +209,7 @@ public class EditProfile extends AppCompatActivityDialog<EditProfile.DialogID> {
                 case GALLERY:
                     if (data != null && data.getData() != null) {
                         currentProfile.setProfilePicture(
-                                Utilities.getRealPathFromURI(this, data.getData()), false);
+                                FileUtilities.getRealPathFromUri(this, data.getData()), false);
                         loadImageProfile(currentProfile);
                     }
                     break;
@@ -279,6 +280,11 @@ public class EditProfile extends AppCompatActivityDialog<EditProfile.DialogID> {
 
         if (originalProfile == null || originalProfile.profileUpdated(currentProfile)) {
 
+            OnFailureListener onFailure = t -> {
+                isCommitting = false;
+                this.openDialog(DialogID.DIALOG_ERROR_FAILED_SAVE_DATA, true);
+            };
+
             // A new profile picture has to be uploaded: it is prepared in background
             // and then it is uploaded to firebase and the other changes are committed
             if (currentProfile.imageUpdated(originalProfile) && currentProfile.hasProfilePicture()) {
@@ -289,12 +295,9 @@ public class EditProfile extends AppCompatActivityDialog<EditProfile.DialogID> {
 
                     OnSuccessListener<Object> onSuccess = t -> {
                         isCommitting = false;
-                        currentProfile.saveToFirebase(this.getResources());
+                        currentProfile.saveToFirebase(this.getResources())
+                                .addOnFailureListener(onFailure);
                         this.onChangesCommitted();
-                    };
-                    OnFailureListener onFailure = t -> {
-                        isCommitting = false;
-                        this.openDialog(DialogID.DIALOG_ERROR_FAILED_SAVE_DATA, true);
                     };
 
                     if (picture == null) {
@@ -311,7 +314,8 @@ public class EditProfile extends AppCompatActivityDialog<EditProfile.DialogID> {
 
             // Otherwise, there is no need for the asynchronous pre-processing phase
             else {
-                currentProfile.saveToFirebase(this.getResources());
+                currentProfile.saveToFirebase(this.getResources())
+                        .addOnFailureListener(onFailure);
                 if (currentProfile.imageUpdated(originalProfile) && !currentProfile.hasProfilePicture()) {
                     currentProfile.deleteProfilePictureFromFirebase();
                 }

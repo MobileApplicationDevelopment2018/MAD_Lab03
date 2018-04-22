@@ -1,17 +1,10 @@
 package it.polito.mad.mad2018.utils;
 
-import android.app.Activity;
 import android.app.Dialog;
 import android.content.Context;
 import android.content.DialogInterface;
-import android.database.Cursor;
-import android.net.Uri;
-import android.support.annotation.NonNull;
 import android.support.annotation.StringRes;
 import android.support.v7.app.AlertDialog;
-
-import static android.provider.MediaStore.Images.Media.DATA;
-import static android.provider.MediaStore.Video;
 
 public class Utilities {
 
@@ -111,13 +104,5 @@ public class Utilities {
         } catch (NumberFormatException nfe) {
             return false;
         }
-    }
-
-    public static String getRealPathFromURI(@NonNull Activity activity, @NonNull Uri contentUri) {
-        String[] proj = {Video.Media.DATA};
-        Cursor cursor = activity.managedQuery(contentUri, proj, null, null, null);
-        int column_index = cursor.getColumnIndexOrThrow(DATA);
-        cursor.moveToFirst();
-        return cursor.getString(column_index);
     }
 }
