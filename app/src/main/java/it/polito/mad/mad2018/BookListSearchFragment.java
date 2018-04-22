@@ -1,6 +1,5 @@
 package it.polito.mad.mad2018;
 
-import android.annotation.SuppressLint;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
@@ -10,17 +9,14 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
-import com.firebase.ui.database.FirebaseRecyclerAdapter;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
-import com.google.firebase.database.Query;
 
 import java.util.ArrayList;
 import java.util.List;
 
 import it.polito.mad.mad2018.data.Book;
-import it.polito.mad.mad2018.utils.BookHolder;
 import it.polito.mad.mad2018.utils.FragmentDialog;
 
 public class BookListSearchFragment extends FragmentDialog<BookListSearchFragment.DialogID>{
@@ -59,14 +55,14 @@ public class BookListSearchFragment extends FragmentDialog<BookListSearchFragmen
                 recyclerView.setHasFixedSize(true);
                 recyclerView.setLayoutManager(new LinearLayoutManager(getActivity()));
                 DatabaseReference bookInformationRef = FirebaseDatabase.getInstance().getReference("books");
-                FirebaseRecyclerAdapter<Book, BookHolder> adapter =
+                /*FirebaseRecyclerAdapter<Book, BookHolder> adapter =
                         new FireBaseRecyclerAdapter<Book, BookHolder>(
                                                                     Book.class,
                                                                     R.layout.book_search_item,
                                                                     BookHolder.class,
                                                                     bookInformationRef
                                                             );
-                recyclerView.setAdapter(adapter);
+                recyclerView.setAdapter(adapter);*/
             }
         };
         firebaseAuth.addAuthStateListener(mAuthStateListener);
@@ -94,6 +90,7 @@ public class BookListSearchFragment extends FragmentDialog<BookListSearchFragmen
         DIALOG_ADD_PICTURE,
     }
 
+    /*
     private class FireBaseRecyclerAdapter<T, T1> extends FirebaseRecyclerAdapter<Book, BookHolder> {
         public FireBaseRecyclerAdapter(Class<Book> modelClass, int modelLayout, Class<BookHolder> viewHolderClass, Query ref) {
             super(modelClass, modelLayout, viewHolderClass, ref);
@@ -107,4 +104,5 @@ public class BookListSearchFragment extends FragmentDialog<BookListSearchFragmen
             viewHolder.setBookImage(model.getBookId(), getContext());
         }
     }
+    */
 }
