@@ -188,8 +188,8 @@ public class AddBookFragment extends FragmentDialog<AddBookFragment.DialogID>
     }
 
     @Override
-    public void onNoNetworkConnection() {
-        Toast.makeText(getContext(), R.string.add_book_query_failed, Toast.LENGTH_LONG).show();
+    public void onTaskCancelled(String msg) {
+        Toast.makeText(getContext(), getString(R.string.add_book_query_failed) + " " + msg, Toast.LENGTH_LONG).show();
     }
 
     @Override
