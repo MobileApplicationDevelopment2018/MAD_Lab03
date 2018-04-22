@@ -60,10 +60,12 @@ public class BookListSearchFragment extends FragmentDialog<BookListSearchFragmen
                 recyclerView.setLayoutManager(new LinearLayoutManager(getActivity()));
                 DatabaseReference bookInformationRef = FirebaseDatabase.getInstance().getReference("books");
                 FirebaseRecyclerAdapter<Book, BookHolder> adapter =
-                        new FireBaseRecyclerAdapter<Book, BookHolder>(Book.class,
-                                R.layout.book_search_item,
-                                BookHolder.class,
-                                bookInformationRef);
+                        new FireBaseRecyclerAdapter<Book, BookHolder>(
+                                                                    Book.class,
+                                                                    R.layout.book_search_item,
+                                                                    BookHolder.class,
+                                                                    bookInformationRef
+                                                            );
                 recyclerView.setAdapter(adapter);
             }
         };
