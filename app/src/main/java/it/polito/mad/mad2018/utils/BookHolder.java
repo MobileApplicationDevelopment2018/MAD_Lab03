@@ -7,12 +7,12 @@ import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
 
-import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 
 import it.polito.mad.mad2018.R;
 
-public class BookHolder extends RecyclerView.ViewHolder {
+public class BookHolder extends RecyclerView.ViewHolder
+        implements View.OnClickListener {
     private final TextView mBookTitle, mBookAuthor;
     private final ImageView mBookPicture;
 
@@ -32,21 +32,22 @@ public class BookHolder extends RecyclerView.ViewHolder {
     }
 
     /**
-     * @param image:   this is the key in storage database of Firebase, we need it to retrieve
+     * @param imageReference:   this is the reference in storage database of Firebase, we need it to retrieve
      *                 the eventual book picture uploaded previously from the user owning the book.
      * @param context:
      */
-    public void setBookImage(String image, Context context) {
-        if (image != null) {
-            StorageReference ref = FirebaseStorage.getInstance()
-                    .getReference("books")
-                    .child(image);
-
+    public void setBookImage(StorageReference imageReference, Context context) {
+        if (imageReference != null) {
             GlideApp.with(context)
-                    .load(ref)
+                    .load(imageReference)
                     .into(mBookPicture);
         } else {
             // TODO: use some default picture.
         }
+    }
+
+    @Override
+    public void onClick(View v) {
+
     }
 }

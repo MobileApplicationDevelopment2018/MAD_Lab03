@@ -11,10 +11,10 @@ import android.view.View;
 import android.view.ViewGroup;
 
 import com.firebase.ui.database.FirebaseRecyclerAdapter;
+import com.firebase.ui.database.FirebaseRecyclerOptions;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
-import com.google.firebase.database.Query;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -52,24 +52,32 @@ public class BookListSearchFragment extends FragmentDialog<BookListSearchFragmen
         View view = inflater.inflate(R.layout.fragment_book_search_results, container, false);
 
         firebaseAuth = FirebaseAuth.getInstance();
-        mAuthStateListener = new FirebaseAuth.AuthStateListener() {
-            @Override
-            public void onAuthStateChanged(@NonNull FirebaseAuth firebaseAuth) {
-                RecyclerView recyclerView = view.findViewById(R.id.fbs_book_list);
-                recyclerView.setHasFixedSize(true);
-                recyclerView.setLayoutManager(new LinearLayoutManager(getActivity()));
-                DatabaseReference bookInformationRef = FirebaseDatabase.getInstance().getReference("books");
-                FirebaseRecyclerAdapter<Book, BookHolder> adapter =
-                        new FireBaseRecyclerAdapter<Book, BookHolder>(
-                                                                    Book.class,
-                                                                    R.layout.book_search_item,
-                                                                    BookHolder.class,
-                                                                    bookInformationRef
-                                                            );
-                recyclerView.setAdapter(adapter);
-            }
-        };
-        firebaseAuth.addAuthStateListener(mAuthStateListener);
+        RecyclerView recyclerView = view.findViewById(R.id.fbs_book_list);
+        recyclerView.setHasFixedSize(true);
+        recyclerView.setLayoutManager(new LinearLayoutManager(getActivity()));
+        DatabaseReference bookInformationRef = FirebaseDatabase.getInstance().getReference("books");
+        FirebaseRecyclerOptions<Book> options = new FirebaseRecyclerOptions.Builder<Book>()
+                .setQuery(bookInformationRef, Book.class)
+                .build();
+        FirebaseRecyclerAdapter<Book, BookHolder> adapter =
+                new FirebaseRecyclerAdapter<Book, BookHolder>(options) {
+                    @NonNull
+                    @Override
+                    public BookHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+                        View view = LayoutInflater.from(parent.getContext())
+                                .inflate(R.layout.book_search_item, parent, false);
+                        return new BookHolder(view);
+                    }
+
+                    @SuppressLint("NewApi")
+                    @Override
+                    protected void onBindViewHolder(@NonNull BookHolder holder, int position, @NonNull Book model) {
+                        holder.setBookAuthor(String.join(",", model.getAuthors()));
+                        holder.setBookTitle(model.getTitle());
+                        holder.setBookImage(model.getBookPictureReference(), getContext());
+                    }
+                };
+        recyclerView.setAdapter(adapter);
 
         return view;
     }
@@ -92,19 +100,5 @@ public class BookListSearchFragment extends FragmentDialog<BookListSearchFragmen
         DIALOG_LOADING,
         DIALOG_SAVING,
         DIALOG_ADD_PICTURE,
-    }
-
-    private class FireBaseRecyclerAdapter<T, T1> extends FirebaseRecyclerAdapter<Book, BookHolder> {
-        public FireBaseRecyclerAdapter(Class<Book> modelClass, int modelLayout, Class<BookHolder> viewHolderClass, Query ref) {
-            super(modelClass, modelLayout, viewHolderClass, ref);
-        }
-
-        @SuppressLint("NewApi")
-        @Override
-        protected void populateViewHolder(BookHolder viewHolder, Book model, int position) {
-            viewHolder.setBookAuthor(String.join(",", model.getAuthors()));
-            viewHolder.setBookTitle(model.getTitle());
-            viewHolder.setBookImage(model.getBookId(), getContext());
-        }
     }
 }
