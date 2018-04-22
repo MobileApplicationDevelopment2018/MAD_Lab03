@@ -100,4 +100,6 @@
     <string name="take_picture_camera">Si, scatta una foto</string>
     <string name="take_picture_gallery">Si, scegli dalla galleria</string>
     <string name="operation_aborted">Operazione annullata</string>
+    <string name="fbs_show_more">Mostra di più</string>
+    <string name="fbs_show_in_map">Mostra sulla mappa</string>
 </resources>

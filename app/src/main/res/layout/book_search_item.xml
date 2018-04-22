@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Layout for single item in list of books derived from search -->
+<android.support.v7.widget.CardView xmlns:card_view="http://schemas.android.com/apk/res-auto"
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/fbs_book_item"
+    android:layout_gravity="center"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_margin="4dp"
+    android:layout_marginStart="4dp"
+    android:layout_marginEnd="4dp"
+    card_view:cardElevation="8dp"
+    card_view:cardCornerRadius="4dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical">
+
+        <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+
+            <ImageView
+                android:id="@+id/fbs_book_item_image"
+                android:layout_width="0dp"
+                android:layout_height="100dp"
+                android:layout_margin="8dp"
+                android:layout_weight="2"
+                android:scaleType="fitCenter" />
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:orientation="vertical"
+                android:layout_weight="3">
+                <TextView
+                    android:id="@+id/fbs_book_item_title"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Title"
+                    android:layout_weight="2"
+                    android:gravity="center"
+                    android:layout_margin="10dp"/>
+
+                <TextView
+                    android:id="@+id/fbs_book_item_author"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Author"
+                    android:layout_weight="1"
+                    android:gravity="center"
+                    android:layout_margin="10dp"/>
+            </LinearLayout>
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="50dp"
+            android:orientation="horizontal"
+            android:gravity="center"
+            android:layout_weight="1">
+            <Button
+                android:id="@+id/fbs_button_more"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/fbs_show_more"
+                android:layout_margin="4dp"
+                android:backgroundTint="@color/light_green_300"
+                android:textColor="@android:color/white"/>
+            <Button
+                android:id="@+id/fbs_button_show_on_map"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/fbs_show_in_map"
+                android:layout_margin="4dp"
+                android:backgroundTint="@color/light_green_300"
+                android:textColor="@android:color/white"/>
+        </LinearLayout>
+    </LinearLayout>
+</android.support.v7.widget.CardView>
