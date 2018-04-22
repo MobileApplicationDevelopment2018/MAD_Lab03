@@ -53,6 +53,7 @@ public class MyBooksFragment extends Fragment {
 
         final FloatingActionButton floatingActionButton = view.findViewById(R.id.l_add_book);
         floatingActionButton.setOnClickListener(v -> getFragmentManager().beginTransaction()
+                                                        .addToBackStack(null)
                                                         .replace(R.id.content_frame, AddBookFragment.newInstance())
                                                         .commit());
 
