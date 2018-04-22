@@ -15,6 +15,8 @@ import com.google.api.services.books.model.Volumes;
 import java.io.IOException;
 import java.lang.ref.WeakReference;
 
+import it.polito.mad.mad2018.R;
+
 public class IsbnQuery extends AsyncTask<String, Object, Volumes> {
 
     private final WeakReference<Context> context;
@@ -63,12 +65,12 @@ public class IsbnQuery extends AsyncTask<String, Object, Volumes> {
     @Override
     protected void onPreExecute() {
 
+        super.onPreExecute();
         Context context = this.context.get();
         TaskListener listener = this.listener.get();
         if (context != null && listener != null) {
             if (!isNetworkConnected(context)) {
                 cancel(true);
-                listener.onNoNetworkConnection();
             } else {
                 listener.onTaskStarted();
             }
@@ -77,17 +79,27 @@ public class IsbnQuery extends AsyncTask<String, Object, Volumes> {
 
     @Override
     protected void onPostExecute(Volumes volumes) {
+
         TaskListener listener = this.listener.get();
         if (listener != null) {
             listener.onTaskFinished(volumes);
         }
     }
 
+    @Override
+    protected void onCancelled() {
+
+        super.onCancelled();
+        TaskListener listener = this.listener.get();
+        if(listener != null) {
+            listener.onTaskCancelled(context.get().getResources().getString(R.string.error_no_internet));
+        }
+    }
+
     public interface TaskListener {
         void onTaskStarted();
         void onTaskFinished(Volumes result);
-
-        void onNoNetworkConnection();
+        void onTaskCancelled(String msg);
     }
 }
 
