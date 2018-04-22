@@ -112,4 +112,6 @@
     <string name="take_picture_gallery">Yes, take from gallery</string>
     <string name="no">No</string>
     <string name="operation_aborted">Operation aborted</string>
+
+    <string name="error_no_internet">No internet connection</string>
 </resources>
