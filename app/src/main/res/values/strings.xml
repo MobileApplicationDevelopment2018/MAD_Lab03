@@ -42,7 +42,8 @@
 
     <string name="nav_header_desc">Navigation header</string>
     <string name="explore">Explore</string>
-    <string name="add_book">Add Book</string>
+    <!--<string name="add_book">Add Book</string>-->
+    <string name="my_library">My library</string>
     <string name="profile">Your profile</string>
 
     <string name="sign_in">Sign In</string>
