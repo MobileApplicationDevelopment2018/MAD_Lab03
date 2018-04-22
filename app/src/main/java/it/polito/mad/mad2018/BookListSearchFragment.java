@@ -24,7 +24,7 @@ public class BookListSearchFragment extends FragmentDialog<BookListSearchFragmen
         ArrayList<Book> bookList = new ArrayList<>(); // arrayList is serializable
         for(Book book : books)
             bookList.add(book);
-        args.putSerializable(Book.BOOK_INFO_KEY, bookList);
+        //args.putSerializable(Book.BOOK_INFO_KEY, bookList);
         fragment.setArguments(args);
         return fragment;
     }
@@ -45,7 +45,7 @@ public class BookListSearchFragment extends FragmentDialog<BookListSearchFragmen
         RecyclerView recyclerView = view.findViewById(R.id.fbs_book_list);
         recyclerView.setHasFixedSize(true);
         recyclerView.setLayoutManager(new LinearLayoutManager(getActivity()));
-        recyclerView.setAdapter(new BookListAdapter(null));
+        recyclerView.setAdapter(new BookListAdapter(new ArrayList<>()));
 
         return view;
     }
@@ -58,7 +58,7 @@ public class BookListSearchFragment extends FragmentDialog<BookListSearchFragmen
         assert getView() != null;
         assert getArguments() != null;
 
-        final ArrayList<Book> bookList = (ArrayList<Book>) getArguments().getSerializable(Book.BOOK_INFO_KEY);
+        //final ArrayList<Book> bookList = (ArrayList<Book>) getArguments().getSerializable(Book.BOOK_INFO_KEY);
 
         // TODO: change title of the activity
         getActivity().setTitle("Results");

@@ -32,7 +32,7 @@ public class BookListAdapter extends RecyclerView.Adapter{
         View view = LayoutInflater
                             .from(parent.getContext())
                             .inflate(R.layout.book_search_item, parent, false);
-        
+
         return new ListViewHolder(view);
     }
 
