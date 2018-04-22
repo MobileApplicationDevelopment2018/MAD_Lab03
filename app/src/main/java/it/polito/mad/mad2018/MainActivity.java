@@ -128,7 +128,8 @@ public class MainActivity extends AppCompatActivityDialog<MainActivity.DialogID>
                 break;
 
             case R.id.nav_add_book:
-                this.replaceFragment(AddBookFragment.newInstance());
+                //this.replaceFragment(AddBookFragment.newInstance());
+                this.replaceFragment(LibraryFragment.newInstance());
                 break;
 
             case R.id.nav_profile:
