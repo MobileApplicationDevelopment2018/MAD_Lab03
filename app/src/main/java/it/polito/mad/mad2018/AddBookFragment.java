@@ -12,7 +12,6 @@ import android.os.Environment;
 import android.provider.MediaStore;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
-import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.content.FileProvider;
 import android.text.Editable;
@@ -28,6 +27,7 @@ import android.widget.Toast;
 
 import com.google.android.gms.common.api.CommonStatusCodes;
 import com.google.android.gms.tasks.OnFailureListener;
+import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.vision.barcode.Barcode;
 import com.google.api.services.books.model.Volume;
 import com.google.api.services.books.model.Volumes;
@@ -262,6 +262,35 @@ public class AddBookFragment extends FragmentDialog<AddBookFragment.DialogID>
         }
     }
 
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String permissions[],
+                                           @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        switch (requestCode) {
+
+            case PERMISSIONS_REQUEST_EXTERNAL_STORAGE: {
+                // If request is cancelled, the result arrays are empty.
+                if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    galleryLoadPicture();
+                }
+
+                return;
+            }
+
+            case PERMISSIONS_REQUEST_CAMERA: {
+                // If request is cancelled, the result arrays are empty.
+                if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    cameraTakePicture();
+                }
+
+                return;
+            }
+
+            default:
+                break;
+        }
+    }
+
     private void startBookUpload() {
 
         authorEtGroup.submitTag();
@@ -316,6 +345,11 @@ public class AddBookFragment extends FragmentDialog<AddBookFragment.DialogID>
     private void uploadBook(ByteArrayOutputStream picture) {
         openDialog(DialogID.DIALOG_SAVING, true);
 
+        OnSuccessListener<Object> onSuccess = v -> {
+            book.saveToFirebase();
+            Toast.makeText(getContext(), getResources().getString(R.string.add_book_saved), Toast.LENGTH_LONG).show();
+            clearViews(true);
+        };
         OnFailureListener onFailure = v -> {
             this.closeDialog();
             Toast.makeText(getContext(), getResources().getString(R.string.add_book_error),
@@ -328,13 +362,15 @@ public class AddBookFragment extends FragmentDialog<AddBookFragment.DialogID>
                 return;
             }
 
-            book.saveToFirebase(picture)
-                    .addOnCompleteListener(v -> closeDialog())
-                    .addOnSuccessListener(v -> {
-                        Toast.makeText(getContext(), getResources().getString(R.string.add_book_saved), Toast.LENGTH_LONG).show();
-                        clearViews(true);
-                    })
-                    .addOnFailureListener(onFailure);
+            if (picture != null) {
+                book.savePictureToFirebase(picture)
+                        .addOnCompleteListener(v -> closeDialog())
+                        .addOnSuccessListener(onSuccess)
+                        .addOnFailureListener(onFailure);
+            } else {
+                onSuccess.onSuccess(null);
+                this.closeDialog();
+            }
         });
     }
 
@@ -475,7 +511,7 @@ public class AddBookFragment extends FragmentDialog<AddBookFragment.DialogID>
                             assert getActivity() != null;
                             if (ContextCompat.checkSelfPermission(getActivity(),
                                     android.Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
-                                ActivityCompat.requestPermissions(getActivity(),
+                                requestPermissions(
                                         new String[]{Manifest.permission.CAMERA}, PERMISSIONS_REQUEST_CAMERA);
                             } else {
                                 cameraTakePicture();
@@ -485,7 +521,7 @@ public class AddBookFragment extends FragmentDialog<AddBookFragment.DialogID>
                             assert getActivity() != null;
                             if (ContextCompat.checkSelfPermission(getActivity(),
                                     Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
-                                ActivityCompat.requestPermissions(getActivity(),
+                                requestPermissions(
                                         new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, PERMISSIONS_REQUEST_EXTERNAL_STORAGE);
                             } else {
                                 galleryLoadPicture();

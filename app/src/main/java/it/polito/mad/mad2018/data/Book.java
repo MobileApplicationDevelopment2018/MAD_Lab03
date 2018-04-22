@@ -193,10 +193,6 @@ public class Book implements Serializable {
     }
 
     public Task<?> saveToFirebase() {
-        return saveToFirebase(null);
-    }
-
-    public Task<?> saveToFirebase(ByteArrayOutputStream picture) {
         FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
         assert currentUser != null;
 
@@ -218,16 +214,16 @@ public class Book implements Serializable {
                 .child(bookId)
                 .setValue(true));
 
-        if (picture != null) {
-            StorageMetadata metadata = new StorageMetadata.Builder()
-                    .setContentType(PictureUtilities.IMAGE_CONTENT_TYPE_UPLOAD)
-                    .build();
-
-            tasks.add(getBookPictureReference()
-                    .putBytes(picture.toByteArray(), metadata));
-        }
-
         return Tasks.whenAllSuccess(tasks);
+    }
+
+    public Task<?> savePictureToFirebase(ByteArrayOutputStream picture) {
+        StorageMetadata metadata = new StorageMetadata.Builder()
+                .setContentType(PictureUtilities.IMAGE_CONTENT_TYPE_UPLOAD)
+                .build();
+
+        return getBookPictureReference()
+                .putBytes(picture.toByteArray(), metadata);
     }
 
     public void saveToAlgolia(CompletionHandler completionHandler) {
