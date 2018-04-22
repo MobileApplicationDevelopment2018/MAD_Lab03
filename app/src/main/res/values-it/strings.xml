@@ -37,7 +37,6 @@
 
     <string name="number_zero">0</string>
     <string name="activity_main">Home</string>
-    <!--<string name="add_book">Aggiungi Libro</string>-->
     <string name="my_library">Libreria</string>
     <string name="anonymous">Non ancora loggato</string>
     <string name="auto_fill">Auto-Fill</string>
@@ -101,4 +100,6 @@
     <string name="take_picture_camera">Si, scatta una foto</string>
     <string name="take_picture_gallery">Si, scegli dalla galleria</string>
     <string name="operation_aborted">Operazione annullata</string>
+    <string name="fbs_show_more">Mostra di più</string>
+    <string name="fbs_show_in_map">Mostra sulla mappa</string>
 </resources>
