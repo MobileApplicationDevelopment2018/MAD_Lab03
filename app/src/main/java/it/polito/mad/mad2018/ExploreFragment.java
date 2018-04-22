@@ -9,15 +9,20 @@ import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.SearchView;
 
 import com.algolia.instantsearch.helpers.InstantSearch;
 import com.algolia.instantsearch.helpers.Searcher;
+import com.algolia.instantsearch.ui.views.SearchBox;
+
+import org.greenrobot.eventbus.EventBus;
 
 import it.polito.mad.mad2018.data.Constants;
 
 public class ExploreFragment extends Fragment {
 
     private Searcher searcher;
+    private InstantSearch helper;
 
     public ExploreFragment() {
         // Required empty public constructor
@@ -56,10 +61,9 @@ public class ExploreFragment extends Fragment {
     @Override
     public void onStart() {
         super.onStart();
-
         searcher = Searcher.create(Constants.ALGOLIA_APP_ID, Constants.ALGOLIA_SEARCH_API_KEY,
                 Constants.ALGOLIA_INDEX_NAME);
-        InstantSearch helper = new InstantSearch(this.getActivity(), searcher);
+        helper = new InstantSearch(this.getActivity(), searcher);
         helper.search();
     }
 
@@ -74,5 +78,7 @@ public class ExploreFragment extends Fragment {
         menu.clear();
         inflater.inflate(R.menu.menu_explore, menu);
         super.onCreateOptionsMenu(menu, inflater);
+        helper.registerSearchView(this.getActivity(), menu, R.id.explore_search);
+        helper.registerWidget(getView().findViewById(R.id.algolia_hits));
     }
 }

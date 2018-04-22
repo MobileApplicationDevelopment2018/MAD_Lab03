@@ -113,10 +113,11 @@
     <string name="no">No</string>
     <string name="operation_aborted">Operation aborted</string>
     <string name="title_activity_maps">Map</string>
-    <string name="fbs_show_more">More...</string>
+    <string name="fbs_show_more">More…</string>
     <string name="fbs_show_in_map">Show in map</string>
 
     <!-- TODO: Remove or change this placeholder text -->
     <string name="hello_blank_fragment">Hello blank fragment</string>
     <string name="error_no_internet">No internet connection</string>
+    <string name="search">Search</string>
 </resources>
