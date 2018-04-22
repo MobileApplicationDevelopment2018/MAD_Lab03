@@ -8,6 +8,5 @@
         android:icon="@android:drawable/ic_menu_search"
         android:title="@string/search"
         app:showAsAction="ifRoom|collapseActionView"
-        app:actionViewClass="com.algolia.instantsearch.ui.views.SearchBox"/>
-    <!--app:actionLayout="@layout/search_view_layout"-->
+        app:actionLayout="@layout/search_view_layout" />
 </menu>
