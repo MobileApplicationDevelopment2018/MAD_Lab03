@@ -11,6 +11,7 @@ import android.view.View;
 import android.view.ViewGroup;
 
 import com.firebase.ui.database.FirebaseRecyclerAdapter;
+import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.Query;
@@ -23,6 +24,8 @@ import it.polito.mad.mad2018.utils.BookHolder;
 import it.polito.mad.mad2018.utils.FragmentDialog;
 
 public class BookListSearchFragment extends FragmentDialog<BookListSearchFragment.DialogID>{
+    private FirebaseAuth.AuthStateListener mAuthStateListener;
+    private FirebaseAuth firebaseAuth;
 
     public static BookListSearchFragment newInstance(@NonNull List<Book> books) {
         BookListSearchFragment fragment = new BookListSearchFragment();
@@ -46,18 +49,26 @@ public class BookListSearchFragment extends FragmentDialog<BookListSearchFragmen
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         super.onCreateView(inflater, container, savedInstanceState);
         setHasOptionsMenu(true);
-
         View view = inflater.inflate(R.layout.fragment_book_search_results, container, false);
-        RecyclerView recyclerView = view.findViewById(R.id.fbs_book_list);
-        recyclerView.setHasFixedSize(true);
-        recyclerView.setLayoutManager(new LinearLayoutManager(getActivity()));
-        DatabaseReference bookInformationRef = FirebaseDatabase.getInstance().getReference("books");
-        FirebaseRecyclerAdapter<Book, BookHolder> adapter =
-                new FireBaseRecyclerAdapter<Book, BookHolder>(Book.class,
-                        R.layout.book_search_item,
-                        BookHolder.class,
-                        bookInformationRef);
-        recyclerView.setAdapter(adapter);
+
+        firebaseAuth = FirebaseAuth.getInstance();
+        mAuthStateListener = new FirebaseAuth.AuthStateListener() {
+            @Override
+            public void onAuthStateChanged(@NonNull FirebaseAuth firebaseAuth) {
+                RecyclerView recyclerView = view.findViewById(R.id.fbs_book_list);
+                recyclerView.setHasFixedSize(true);
+                recyclerView.setLayoutManager(new LinearLayoutManager(getActivity()));
+                DatabaseReference bookInformationRef = FirebaseDatabase.getInstance().getReference("books");
+                FirebaseRecyclerAdapter<Book, BookHolder> adapter =
+                        new FireBaseRecyclerAdapter<Book, BookHolder>(Book.class,
+                                R.layout.book_search_item,
+                                BookHolder.class,
+                                bookInformationRef);
+                recyclerView.setAdapter(adapter);
+            }
+        };
+        firebaseAuth.addAuthStateListener(mAuthStateListener);
+
         return view;
     }
 
