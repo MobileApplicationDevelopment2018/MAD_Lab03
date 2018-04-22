@@ -32,6 +32,7 @@ import com.google.firebase.database.ValueEventListener;
 import java.util.Arrays;
 
 import it.polito.mad.mad2018.data.UserProfile;
+import it.polito.mad.mad2018.library.LibraryFragment;
 import it.polito.mad.mad2018.utils.AppCompatActivityDialog;
 import it.polito.mad.mad2018.utils.GlideApp;
 import it.polito.mad.mad2018.utils.GlideRequest;
@@ -124,7 +125,7 @@ public class MainActivity extends AppCompatActivityDialog<MainActivity.DialogID>
                 break;
 
             case R.id.nav_add_book:
-                this.replaceFragment(AddBookFragment.newInstance());
+                this.replaceFragment(LibraryFragment.newInstance());
                 break;
 
             case R.id.nav_profile:

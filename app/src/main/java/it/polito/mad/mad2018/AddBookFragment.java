@@ -156,7 +156,7 @@ public class AddBookFragment extends FragmentDialog<AddBookFragment.DialogID> im
         super.onActivityCreated(savedInstanceState);
 
         assert getActivity() != null;
-        getActivity().setTitle(R.string.add_book);
+        getActivity().setTitle(R.string.my_library);
     }
 
     @Override

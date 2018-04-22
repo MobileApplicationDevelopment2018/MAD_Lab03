@@ -10,8 +10,8 @@
             android:title="@string/explore" />
         <item
             android:id="@+id/nav_add_book"
-            android:icon="@drawable/ic_note_add_black_24dp"
-            android:title="@string/add_book" />
+            android:icon="@drawable/ic_library_black_24dp"
+            android:title="@string/my_library" />
         <item
             android:id="@+id/nav_profile"
             android:icon="@drawable/ic_person_black_24dp"

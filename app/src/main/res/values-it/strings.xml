@@ -37,7 +37,7 @@
 
     <string name="number_zero">0</string>
     <string name="activity_main">Home</string>
-    <string name="add_book">Aggiungi Libro</string>
+    <string name="my_library">Libreria</string>
     <string name="anonymous">Non ancora loggato</string>
     <string name="auto_fill">Auto-Fill</string>
     <string name="complete_profile">Controlla e completa le tue informazioni se vuoi</string>
