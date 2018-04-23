@@ -40,9 +40,9 @@ public class Book implements Serializable {
     public static final int BOOK_PICTURE_SIZE = 1024;
     public static final int BOOK_PICTURE_QUALITY = 50;
 
-    private static final String FIREBASE_BOOKS_KEY = "books";
-    private static final String FIREBASE_STORAGE_BOOKS_FOLDER = "books";
-    private static final String FIREBASE_STORAGE_IMAGE_NAME = "picture";
+    public static final String FIREBASE_BOOKS_KEY = "books";
+    public static final String FIREBASE_STORAGE_BOOKS_FOLDER = "books";
+    public static final String FIREBASE_STORAGE_IMAGE_NAME = "picture";
 
     private final String bookId;
     private final Book.Data data;

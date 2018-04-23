@@ -45,7 +45,7 @@
                     algolia:attribute='@{"authors"}' />
             </LinearLayout>
 
-            <ImageView
+            <it.polito.mad.mad2018.views.BookImageView
                 android:id="@+id/fbs_book_item_image"
                 android:layout_width="80dp"
                 android:layout_height="80dp"
