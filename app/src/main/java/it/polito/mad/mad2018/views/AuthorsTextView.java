@@ -1,10 +1,16 @@
 package it.polito.mad.mad2018.views;
 
 import android.content.Context;
-import android.graphics.Canvas;
+import android.support.v7.widget.AppCompatTextView;
 import android.util.AttributeSet;
 
-public class AuthorsTextView extends android.support.v7.widget.AppCompatTextView {
+import com.algolia.instantsearch.ui.views.AlgoliaHitView;
+
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
+public class AuthorsTextView extends AppCompatTextView implements AlgoliaHitView {
     public AuthorsTextView(Context context) {
         super(context);
     }
@@ -17,16 +23,21 @@ public class AuthorsTextView extends android.support.v7.widget.AppCompatTextView
         super(context, attrs, defStyle);
     }
 
-    protected void onDraw(Canvas canvas) {
-        super.onDraw(canvas);
-    }
-
     @Override
-    public void setText(CharSequence text, BufferType type) {
-        String finalText = text.toString().replace(",", ", ")
-                .replace("[", "")
-                .replace("]", "")
-                .replace("\"", "");
-        super.setText(finalText, type);
+    public void onUpdateView(JSONObject result) {
+        StringBuilder authors = new StringBuilder();
+
+        try {
+            JSONArray jsonArray = result.getJSONArray("authors");
+            for(int i = 0; i < jsonArray.length(); i++) {
+                if(i > 0) {
+                    authors.append(", ");
+                }
+                authors.append(jsonArray.getString(i));
+            }
+        } catch (JSONException e) {
+            throw new RuntimeException(e);
+        }
+        setText(authors.toString());
     }
 }
