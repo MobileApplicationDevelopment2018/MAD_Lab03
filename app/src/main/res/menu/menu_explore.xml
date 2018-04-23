@@ -5,8 +5,8 @@
     tools:context=".ExploreFragment">
     <item
         android:id="@+id/explore_search"
-        android:icon="@android:drawable/ic_menu_search"
-        android:title="Search"
-        app:showAsAction="ifRoom|collapseActionView"
+        android:icon="@drawable/ic_search_white_24dp"
+        android:title="@string/search"
+        app:showAsAction="always|collapseActionView"
         app:actionLayout="@layout/search_view_layout"/>
 </menu>
