@@ -250,6 +250,11 @@ public class Book implements Serializable {
         JSONObject object = this.data.bookInfo.toJSON();
         if (object != null) {
             Log.e("Algolia", data.toString());
+            try {
+                object.put("bookId", bookId);
+            } catch (JSONException e) {
+                // Error don't add anything
+            }
             AlgoliaBookIndex.getInstance()
                     .addObjectAsync(object, bookId, completionHandler);
         }
