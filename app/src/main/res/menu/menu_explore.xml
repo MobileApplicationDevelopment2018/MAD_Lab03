@@ -4,9 +4,9 @@
     xmlns:tools="http://schemas.android.com/tools"
     tools:context=".ExploreFragment">
     <item
-        android:id="@+id/ep_save_profile"
-        android:icon="@drawable/ic_search_white_24dp"
-        android:orderInCategory="300"
-        android:title="@string/save_profile"
-        app:showAsAction="ifRoom" />
+        android:id="@+id/explore_search"
+        android:icon="@android:drawable/ic_menu_search"
+        android:title="Search"
+        app:showAsAction="ifRoom|collapseActionView"
+        app:actionLayout="@layout/search_view_layout"/>
 </menu>
