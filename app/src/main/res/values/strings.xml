@@ -123,4 +123,6 @@
     <string name="error_no_internet">No internet connection</string>
     <string name="search">Search</string>
     <string name="hint_owner">Owner</string>
+    <string name="book_conditions_list">Poor, Fair, Good, Mint</string>
+    <string name="book_condition_any">Any condition</string>
 </resources>

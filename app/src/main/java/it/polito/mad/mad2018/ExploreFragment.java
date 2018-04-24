@@ -9,6 +9,7 @@ import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.RelativeLayout;
 import android.widget.SearchView;
 
 import com.algolia.instantsearch.helpers.InstantSearch;
@@ -47,7 +48,11 @@ public class ExploreFragment extends Fragment {
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         setHasOptionsMenu(true);
-        return inflater.inflate(R.layout.fragment_explore, container, false);
+        View view = inflater.inflate(R.layout.fragment_explore, container, false);
+        RelativeLayout filters = view.findViewById(R.id.search_filters_bar);
+        view.findViewById(R.id.show_search_options)
+                .setOnClickListener(v -> filters.setVisibility(filters.getVisibility() == View.GONE ? View.VISIBLE : View.GONE));
+        return view;
     }
 
     @Override
