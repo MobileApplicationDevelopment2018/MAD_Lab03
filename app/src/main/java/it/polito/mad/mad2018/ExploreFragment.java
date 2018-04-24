@@ -78,7 +78,7 @@ public class ExploreFragment extends Fragment {
         menu.clear();
         inflater.inflate(R.menu.menu_explore, menu);
         super.onCreateOptionsMenu(menu, inflater);
-        helper.registerSearchView(this.getActivity(), menu, R.id.explore_search);
-        helper.registerWidget(getView().findViewById(R.id.algolia_hits));
+        //helper.registerSearchView(this.getActivity(), menu, R.id.explore_search);
+        //helper.registerWidget(getView().findViewById(R.id.algolia_hits));
     }
 }

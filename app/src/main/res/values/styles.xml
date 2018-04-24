@@ -21,4 +21,5 @@
         <item name="android:paddingRight">@dimen/input_label_horizontal_spacing</item>
         <item name="android:textColor">?android:textColorHint</item>
     </style>
+
 </resources>
