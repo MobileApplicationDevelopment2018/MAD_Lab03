@@ -32,7 +32,6 @@ import com.google.android.gms.vision.barcode.Barcode;
 import com.google.api.services.books.model.Volume;
 import com.google.api.services.books.model.Volumes;
 
-import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -316,7 +315,7 @@ public class AddBookFragment extends FragmentDialog<AddBookFragment.DialogID>
 
     private void processPicture(@NonNull String imagePath) {
         new PictureUtilities.CompressImageAsync(
-                imagePath, Book.BOOK_PICTURE_SIZE, 0,
+                imagePath, Book.BOOK_PICTURE_SIZE, Book.BOOK_THUMBNAIL_SIZE,
                 Book.BOOK_PICTURE_QUALITY, picture -> {
 
             if (fileToBeDeleted) {
@@ -333,16 +332,15 @@ public class AddBookFragment extends FragmentDialog<AddBookFragment.DialogID>
                 return;
             }
 
-            uploadBook(picture.getPicture());
-        })
-                .execute();
+            uploadBook(picture);
+        }).execute();
     }
 
     private void uploadBook() {
         uploadBook(null);
     }
 
-    private void uploadBook(ByteArrayOutputStream picture) {
+    private void uploadBook(PictureUtilities.CompressedImage picture) {
         openDialog(DialogID.DIALOG_SAVING, true);
 
         OnSuccessListener<Object> onSuccess = v -> {
@@ -363,7 +361,7 @@ public class AddBookFragment extends FragmentDialog<AddBookFragment.DialogID>
             }
 
             if (picture != null) {
-                book.savePictureToFirebase(picture)
+                book.savePictureToFirebase(picture.getPicture(), picture.getThumbnail())
                         .addOnCompleteListener(v -> closeDialog())
                         .addOnSuccessListener(onSuccess)
                         .addOnFailureListener(onFailure);

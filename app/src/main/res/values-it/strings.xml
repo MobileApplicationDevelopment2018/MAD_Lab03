@@ -102,4 +102,6 @@
     <string name="operation_aborted">Operazione annullata</string>
     <string name="fbs_show_more">Mostra di più</string>
     <string name="fbs_show_in_map">Mostra sulla mappa</string>
+
+    <string name="unknown_authors">Autori sconosciuti</string>
 </resources>

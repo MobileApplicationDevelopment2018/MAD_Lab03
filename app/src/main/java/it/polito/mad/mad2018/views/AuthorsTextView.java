@@ -10,7 +10,10 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import it.polito.mad.mad2018.R;
+
 public class AuthorsTextView extends AppCompatTextView implements AlgoliaHitView {
+
     public AuthorsTextView(Context context) {
         super(context);
     }
@@ -25,19 +28,23 @@ public class AuthorsTextView extends AppCompatTextView implements AlgoliaHitView
 
     @Override
     public void onUpdateView(JSONObject result) {
-        StringBuilder authors = new StringBuilder();
 
         try {
             JSONArray jsonArray = result.getJSONArray("authors");
-            for(int i = 0; i < jsonArray.length(); i++) {
-                if(i > 0) {
-                    authors.append(", ");
+
+            if (jsonArray != null && jsonArray.length() > 0) {
+                StringBuilder authors = new StringBuilder();
+                for (int i = 0; i < jsonArray.length(); i++) {
+                    if (i > 0) {
+                        authors.append(", ");
+                    }
+                    authors.append(jsonArray.getString(i));
+                    setText(authors.toString());
                 }
-                authors.append(jsonArray.getString(i));
             }
-        } catch (JSONException e) {
-            throw new RuntimeException(e);
-        }
-        setText(authors.toString());
+            return;
+        } catch (JSONException e) { /* Do nothing */ }
+
+        setText(getResources().getString(R.string.unknown_authors));
     }
 }

@@ -3,7 +3,6 @@ package it.polito.mad.mad2018.data;
 import android.content.res.Resources;
 import android.support.annotation.NonNull;
 import android.text.TextUtils;
-import android.util.Log;
 
 import com.algolia.search.saas.Client;
 import com.algolia.search.saas.CompletionHandler;
@@ -39,10 +38,12 @@ public class Book implements Serializable {
     public static final int INITIAL_YEAR = 1900;
     public static final int BOOK_PICTURE_SIZE = 1024;
     public static final int BOOK_PICTURE_QUALITY = 50;
+    public static final int BOOK_THUMBNAIL_SIZE = 80;
 
-    public static final String FIREBASE_BOOKS_KEY = "books";
-    public static final String FIREBASE_STORAGE_BOOKS_FOLDER = "books";
-    public static final String FIREBASE_STORAGE_IMAGE_NAME = "picture";
+    private static final String FIREBASE_BOOKS_KEY = "books";
+    private static final String FIREBASE_STORAGE_BOOKS_FOLDER = "books";
+    private static final String FIREBASE_STORAGE_IMAGE_NAME = "picture";
+    private static final String FIREBASE_STORAGE_THUMBNAIL_NAME = "thumbnail";
 
     private final String bookId;
     private final Book.Data data;
@@ -152,6 +153,20 @@ public class Book implements Serializable {
                 .child(FIREBASE_BOOKS_KEY).push().getKey();
     }
 
+    public static StorageReference getBookPictureReference(@NonNull String bookId) {
+        return FirebaseStorage.getInstance().getReference()
+                .child(FIREBASE_STORAGE_BOOKS_FOLDER)
+                .child(bookId)
+                .child(FIREBASE_STORAGE_IMAGE_NAME);
+    }
+
+    public static StorageReference getBookThumbnailReference(@NonNull String bookId) {
+        return FirebaseStorage.getInstance().getReference()
+                .child(FIREBASE_STORAGE_BOOKS_FOLDER)
+                .child(bookId)
+                .child(FIREBASE_STORAGE_THUMBNAIL_NAME);
+    }
+
     public String getBookId() {
         return this.bookId;
     }
@@ -205,11 +220,11 @@ public class Book implements Serializable {
     }
 
     public StorageReference getBookPictureReference() {
-        assert this.bookId != null;
-        return FirebaseStorage.getInstance().getReference()
-                .child(FIREBASE_STORAGE_BOOKS_FOLDER)
-                .child(this.bookId)
-                .child(FIREBASE_STORAGE_IMAGE_NAME);
+        return Book.getBookPictureReference(this.bookId);
+    }
+
+    public StorageReference getBookThumbnailReference() {
+        return Book.getBookThumbnailReference(this.bookId);
     }
 
     public Task<?> saveToFirebase() {
@@ -236,25 +251,22 @@ public class Book implements Serializable {
         return Tasks.whenAllSuccess(tasks);
     }
 
-    public Task<?> savePictureToFirebase(ByteArrayOutputStream picture) {
+    public Task<?> savePictureToFirebase(ByteArrayOutputStream picture,
+                                         ByteArrayOutputStream thumbnail) {
         StorageMetadata metadata = new StorageMetadata.Builder()
                 .setContentType(PictureUtilities.IMAGE_CONTENT_TYPE_UPLOAD)
                 .build();
 
-        return getBookPictureReference()
-                .putBytes(picture.toByteArray(), metadata);
+        List<Task<?>> tasks = new ArrayList<>();
+        tasks.add(getBookPictureReference().putBytes(picture.toByteArray(), metadata));
+        tasks.add(getBookThumbnailReference().putBytes(thumbnail.toByteArray(), metadata));
+        return Tasks.whenAllSuccess(tasks);
     }
 
     public void saveToAlgolia(CompletionHandler completionHandler) {
 
-        JSONObject object = this.data.bookInfo.toJSON();
+        JSONObject object = this.data.bookInfo.toJSON(this.bookId);
         if (object != null) {
-            Log.e("Algolia", data.toString());
-            try {
-                object.put("bookId", bookId);
-            } catch (JSONException e) {
-                // Error don't add anything
-            }
             AlgoliaBookIndex.getInstance()
                     .addObjectAsync(object, bookId, completionHandler);
         }
@@ -304,9 +316,11 @@ public class Book implements Serializable {
                 this.tags = new ArrayList<>();
             }
 
-            private JSONObject toJSON() {
+            private JSONObject toJSON(@NonNull String bookId) {
                 try {
-                    return new JSONObject(new GsonBuilder().create().toJson(this));
+                    JSONObject data = new JSONObject(new GsonBuilder().create().toJson(this));
+                    data.put("bookId", bookId);
+                    return data;
                 } catch (JSONException e) {
                     return null;
                 }

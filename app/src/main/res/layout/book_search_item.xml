@@ -41,16 +41,14 @@
                     android:layout_marginTop="8dp"
                     android:ellipsize="end"
                     android:lines="1"
-                    android:textAppearance="@style/TextAppearance.AppCompat.Body1"
-                    algolia:attribute='@{"authors"}' />
+                    android:textAppearance="@style/TextAppearance.AppCompat.Body1" />
             </LinearLayout>
 
             <it.polito.mad.mad2018.views.BookImageView
                 android:id="@+id/fbs_book_item_image"
                 android:layout_width="80dp"
                 android:layout_height="80dp"
-                android:layout_marginStart="16dp"
-                android:background="#FFFFFF" />
+                android:layout_marginStart="16dp" />
         </LinearLayout>
     </android.support.v7.widget.CardView>
 </layout>
