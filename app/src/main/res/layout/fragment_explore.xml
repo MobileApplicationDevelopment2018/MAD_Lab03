@@ -51,6 +51,7 @@
                 android:paddingTop="4dp"
                 android:visibility="gone">
                 <com.algolia.instantsearch.ui.views.filters.NumericSelector
+                    android:id="@+id/numeric_selector"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:spinnerMode="dropdown"

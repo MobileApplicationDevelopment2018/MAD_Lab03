@@ -4,6 +4,7 @@ import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -15,6 +16,7 @@ import android.widget.SearchView;
 import com.algolia.instantsearch.helpers.InstantSearch;
 import com.algolia.instantsearch.helpers.Searcher;
 import com.algolia.instantsearch.ui.views.SearchBox;
+import com.algolia.instantsearch.ui.views.filters.NumericSelector;
 
 import org.greenrobot.eventbus.EventBus;
 
@@ -69,6 +71,13 @@ public class ExploreFragment extends Fragment {
         searcher = Searcher.create(Constants.ALGOLIA_APP_ID, Constants.ALGOLIA_SEARCH_API_KEY,
                 Constants.ALGOLIA_INDEX_NAME);
         helper = new InstantSearch(this.getActivity(), searcher);
+        NumericSelector numericSelector = getView().findViewById(R.id.numeric_selector);
+        numericSelector.initWithSearcher(searcher);
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
         helper.search();
     }
 
