@@ -6,6 +6,7 @@ import android.util.AttributeSet;
 import android.util.Log;
 
 import com.algolia.instantsearch.ui.views.AlgoliaHitView;
+import com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 
@@ -34,27 +35,26 @@ public class BookImageView extends AppCompatImageView implements AlgoliaHitView 
         try {
             String bookId = result.getString("bookId");
             Log.d("Tag", bookId + "=>" + result.getString("title"));
-            if (bookId != null) {
-                StorageReference ref = FirebaseStorage.getInstance().getReference()
-                        .child(Book.FIREBASE_STORAGE_BOOKS_FOLDER)
-                        .child(bookId)
-                        .child(Book.FIREBASE_STORAGE_IMAGE_NAME);
+            StorageReference ref = FirebaseStorage.getInstance().getReference()
+                    .child(Book.FIREBASE_STORAGE_BOOKS_FOLDER)
+                    .child(bookId)
+                    .child(Book.FIREBASE_STORAGE_IMAGE_NAME);
 
-                if (ref != null) {
-                    GlideApp.with(getContext())
-                            .load(ref)
-                            .into(this);
-                }
-            } else {
+            if (ref.getMetadata() != null) {
                 GlideApp.with(getContext())
-                        .load(R.drawable.default_book_preview)
+                        .load(ref)
+                        .fallback(R.drawable.default_book_preview)
+                        .transition(DrawableTransitionOptions.withCrossFade())
+                        .centerCrop()
                         .into(this);
             }
-
         } catch (JSONException e) {
-            // Non existing field, don't do anything
+            // Non existing field
             GlideApp.with(getContext())
-                    .load(R.drawable.default_book_preview)
+                    .load("")
+                    .fallback(R.drawable.default_book_preview)
+                    .transition(DrawableTransitionOptions.withCrossFade())
+                    .centerCrop()
                     .into(this);
         }
     }
