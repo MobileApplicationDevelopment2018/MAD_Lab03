@@ -1,6 +1,7 @@
 package it.polito.mad.mad2018.views;
 
 import android.content.Context;
+import android.support.v7.app.AppCompatDelegate;
 import android.support.v7.widget.AppCompatImageView;
 import android.util.AttributeSet;
 import android.util.Log;
@@ -18,6 +19,10 @@ import it.polito.mad.mad2018.data.Book;
 import it.polito.mad.mad2018.utils.GlideApp;
 
 public class BookImageView extends AppCompatImageView implements AlgoliaHitView {
+    static {
+        AppCompatDelegate.setCompatVectorFromResourcesEnabled(true);
+    }
+
     public BookImageView(Context context) {
         super(context);
     }
@@ -40,19 +45,21 @@ public class BookImageView extends AppCompatImageView implements AlgoliaHitView 
                     .child(bookId)
                     .child(Book.FIREBASE_STORAGE_IMAGE_NAME);
 
-            if (ref.getMetadata() != null) {
-                GlideApp.with(getContext())
-                        .load(ref)
-                        .fallback(R.drawable.default_book_preview)
-                        .transition(DrawableTransitionOptions.withCrossFade())
-                        .centerCrop()
-                        .into(this);
-            }
+            Log.d("Tag1", "Not exception --> " + R.drawable.default_book_preview);
+            GlideApp.with(getContext())
+                    .load(ref)
+                    .placeholder(R.drawable.default_book_preview)
+                    .error(R.drawable.default_book_preview)
+                    .transition(DrawableTransitionOptions.withCrossFade())
+                    .centerCrop()
+                    .into(this);
         } catch (JSONException e) {
             // Non existing field
+            Log.d("Tag", "Exception --> " + R.drawable.default_book_preview);
             GlideApp.with(getContext())
                     .load("")
-                    .fallback(R.drawable.default_book_preview)
+                    .placeholder(R.drawable.default_book_preview)
+                    .error(R.drawable.default_book_preview)
                     .transition(DrawableTransitionOptions.withCrossFade())
                     .centerCrop()
                     .into(this);
