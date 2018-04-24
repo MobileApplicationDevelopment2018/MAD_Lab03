@@ -148,6 +148,12 @@ public class Book implements Serializable {
                 .build();
     }
 
+    public static DatabaseReference getBookByLocalUser(@NonNull String bookId) {
+        return FirebaseDatabase.getInstance().getReference()
+                .child(FIREBASE_BOOKS_KEY)
+                .child(bookId);
+    }
+
     private static String generateBookId() {
         return FirebaseDatabase.getInstance().getReference()
                 .child(FIREBASE_BOOKS_KEY).push().getKey();

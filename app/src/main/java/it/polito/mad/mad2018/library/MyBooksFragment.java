@@ -15,8 +15,6 @@ import android.view.ViewGroup;
 import com.firebase.ui.database.FirebaseRecyclerAdapter;
 import com.firebase.ui.database.FirebaseRecyclerOptions;
 
-import java.util.List;
-
 import it.polito.mad.mad2018.AddBookFragment;
 import it.polito.mad.mad2018.R;
 import it.polito.mad.mad2018.data.Book;
@@ -32,7 +30,7 @@ import it.polito.mad.mad2018.utils.BookHolder;
  * create an instance of this fragment.
  */
 public class MyBooksFragment extends Fragment {
-    private List<Book> myBooks;
+    FirebaseRecyclerAdapter<Book, BookHolder> adapter;
 
     public MyBooksFragment() {
         // Required empty public constructor
@@ -73,8 +71,7 @@ public class MyBooksFragment extends Fragment {
         recyclerView.setLayoutManager(new GridLayoutManager(getContext(), 3));
 
         FirebaseRecyclerOptions<Book> options = Book.getBooksLocalUser();
-        FirebaseRecyclerAdapter<Book, BookHolder> adapter =
-                new FirebaseRecyclerAdapter<Book, BookHolder>(options) {
+        adapter = new FirebaseRecyclerAdapter<Book, BookHolder>(options) {
                     @NonNull
                     @Override
                     public BookHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
@@ -87,12 +84,25 @@ public class MyBooksFragment extends Fragment {
                     protected void onBindViewHolder(@NonNull BookHolder holder, int position, @NonNull Book model) {
                         holder.setBookTitle(model.getTitle());
                         holder.setBookImage(model.getBookPictureReference(), getContext());
+                        holder.setBookId(model.getBookId());
                     }
                 };
 
         recyclerView.setAdapter(adapter);
 
         return view;
+    }
+
+    @Override
+    public void onStart() {
+        adapter.startListening();
+        super.onStart();
+    }
+
+    @Override
+    public void onStop() {
+        adapter.stopListening();
+        super.onStop();
     }
 
     // TODO: Rename method, update argument and hook method into UI event
