@@ -66,7 +66,7 @@ public class LibraryFragment extends Fragment {
     }
 
     private void setupViewPager(ViewPager viewPager) {
-        ViewPagerAdapter adapter = new ViewPagerAdapter(getActivity().getSupportFragmentManager());
+        ViewPagerAdapter adapter = new ViewPagerAdapter(getChildFragmentManager());
         adapter.addFragment(new MyBooksFragment(), "My Books");
         adapter.addFragment(new LentBooksFragment(), "Lent");
         adapter.addFragment(new BorrowedBooksFragment(), "Borrowed");
