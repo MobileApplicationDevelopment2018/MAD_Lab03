@@ -7,47 +7,43 @@ import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions;
 import com.google.firebase.storage.StorageReference;
 
 import it.polito.mad.mad2018.R;
+import it.polito.mad.mad2018.data.Book;
 
-public class BookHolder extends RecyclerView.ViewHolder
-        implements View.OnClickListener {
-    private final TextView mBookTitle, mBookAuthor;
+public class BookHolder extends RecyclerView.ViewHolder {
+    private final TextView mBookTitle;
     private final ImageView mBookPicture;
+    private final Context ctx;
 
     public BookHolder(@NonNull View view) {
         super(view);
-        mBookTitle = view.findViewById(R.id.fbs_book_item_title);
-        mBookAuthor = view.findViewById(R.id.fbs_book_item_author);
-        mBookPicture = view.findViewById(R.id.fbs_book_item_image);
+        mBookTitle = view.findViewById(R.id.bli_book_title);
+        mBookPicture = view.findViewById(R.id.bli_book_picture);
+        ctx = view.getContext();
     }
 
     public void setBookTitle(String title) {
         mBookTitle.setText(title);
     }
 
-    public void setBookAuthor(String author) {
-        mBookAuthor.setText(author);
+    public void setBookImage(String bookId) {
+        setBookImage(Book.getBookThumbnailReference(bookId), ctx);
     }
 
     /**
-     * @param imageReference:   this is the reference in storage database of Firebase, we need it to retrieve
-     *                 the eventual book picture uploaded previously from the user owning the book.
-     * @param context:
+     * @param imageReference: this is the reference in storage database of Firebase, we need it to retrieve
+     *                        the eventual book picture uploaded previously from the user owning the book.
+     * @param context
      */
     public void setBookImage(StorageReference imageReference, Context context) {
-        if (imageReference != null) {
-            GlideApp.with(context)
-                    .load(imageReference)
-                    .into(mBookPicture);
-        } else {
-            // TODO: use some default picture.
-        }
-    }
-
-    @Override
-    public void onClick(View v) {
-
+        GlideApp.with(context)
+                .load(imageReference)
+                .placeholder(R.drawable.default_book_preview)
+                .transition(DrawableTransitionOptions.withCrossFade())
+                .centerCrop()
+                .into(mBookPicture);
     }
 }
