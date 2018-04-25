@@ -1,9 +1,10 @@
-package it.polito.mad.mad2018;
+package it.polito.mad.mad2018.library;
 
 import android.Manifest;
 import android.app.AlertDialog;
 import android.app.Dialog;
 import android.app.ProgressDialog;
+import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.net.Uri;
@@ -40,6 +41,8 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
 
+import it.polito.mad.mad2018.BuildConfig;
+import it.polito.mad.mad2018.R;
 import it.polito.mad.mad2018.barcodereader.BarcodeCaptureActivity;
 import it.polito.mad.mad2018.data.Book;
 import it.polito.mad.mad2018.utils.FileUtilities;
@@ -77,12 +80,7 @@ public class AddBookFragment extends FragmentDialog<AddBookFragment.DialogID>
     private boolean fileToBeDeleted;
     private Locale currentLocale;
 
-    public static AddBookFragment newInstance() {
-        AddBookFragment fragment = new AddBookFragment();
-        Bundle args = new Bundle();
-        fragment.setArguments(args);
-        return fragment;
-    }
+    private OnBookAddedListener onBookAddedListener;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -93,8 +91,6 @@ public class AddBookFragment extends FragmentDialog<AddBookFragment.DialogID>
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        super.onCreateView(inflater, container, savedInstanceState);
-
         // Inflate the layout for this fragment
         View view = inflater.inflate(R.layout.fragment_add_book, container, false);
         findViews(view);
@@ -141,7 +137,8 @@ public class AddBookFragment extends FragmentDialog<AddBookFragment.DialogID>
             }
         });
 
-        fillSpinnerYear(view);
+        fillSpinnerYear(yearSpinner);
+        fillSpinnerConditions(conditionSpinner);
         currentLocale = getResources().getConfiguration().locale;
 
         book = null;
@@ -157,9 +154,21 @@ public class AddBookFragment extends FragmentDialog<AddBookFragment.DialogID>
     @Override
     public void onActivityCreated(@Nullable Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
+    }
 
-        assert getActivity() != null;
-        getActivity().setTitle(R.string.my_library);
+    @Override
+    public void onAttach(Context context) {
+        super.onAttach(context);
+
+        if (getActivity() instanceof AddBookFragment.OnBookAddedListener) {
+            this.onBookAddedListener = (AddBookFragment.OnBookAddedListener) getActivity();
+        }
+    }
+
+    @Override
+    public void onDetach() {
+        super.onDetach();
+        this.onBookAddedListener = null;
     }
 
     @Override
@@ -305,7 +314,7 @@ public class AddBookFragment extends FragmentDialog<AddBookFragment.DialogID>
         if (!checkMandatoryFieldsInput(isbn, title, authors))
             return;
 
-        String condition = conditionSpinner.getSelectedItem().toString();
+        Book.BookConditions condition = (Book.BookConditions) conditionSpinner.getSelectedItem();
         List<String> tags = Arrays.asList(tagGroup.getTags());
         book = new Book(isbn, title, Arrays.asList(authors), language, publisher, year,
                 condition, tags, getResources());
@@ -347,6 +356,10 @@ public class AddBookFragment extends FragmentDialog<AddBookFragment.DialogID>
             book.saveToFirebase();
             Toast.makeText(getContext(), getResources().getString(R.string.add_book_saved), Toast.LENGTH_LONG).show();
             clearViews(true);
+
+            if (onBookAddedListener != null) {
+                onBookAddedListener.OnBookAdded(book);
+            }
         };
         OnFailureListener onFailure = v -> {
             this.closeDialog();
@@ -427,7 +440,7 @@ public class AddBookFragment extends FragmentDialog<AddBookFragment.DialogID>
         isbnEdit.requestFocus();
     }
 
-    private void fillSpinnerYear(View view) {
+    private void fillSpinnerYear(Spinner spinYear) {
         ArrayList<String> years = new ArrayList<>();
         int thisYear = Calendar.getInstance().get(Calendar.YEAR);
 
@@ -438,8 +451,15 @@ public class AddBookFragment extends FragmentDialog<AddBookFragment.DialogID>
         ArrayAdapter<String> adapter = new ArrayAdapter<>(getActivity(),
                 android.R.layout.simple_spinner_item, years);
 
-        Spinner spinYear = view.findViewById(R.id.ab_edition_year_edit);
         spinYear.setAdapter(adapter);
+    }
+
+    private void fillSpinnerConditions(Spinner spinConditions) {
+        assert getActivity() != null;
+        ArrayAdapter<Book.BookConditions> adapter = new ArrayAdapter<>(getActivity(),
+                android.R.layout.simple_spinner_item, Book.BookConditions.values());
+
+        spinConditions.setAdapter(adapter);
     }
 
     private boolean checkMandatoryFieldsInput(String isbn, String title, String[] authors) {
@@ -541,5 +561,9 @@ public class AddBookFragment extends FragmentDialog<AddBookFragment.DialogID>
         DIALOG_LOADING,
         DIALOG_SAVING,
         DIALOG_ADD_PICTURE,
+    }
+
+    public interface OnBookAddedListener {
+        void OnBookAdded(Book book);
     }
 }

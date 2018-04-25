@@ -1,9 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">MAD Laboratorio 2</string>
+    <string name="app_name">MAD Laboratorio 3</string>
     <string name="show_profile">Mostra Profilo</string>
     <string name="edit_profile">Modifica Profilo</string>
     <string name="save_profile">Salva Profilo</string>
+    <string name="add_book">Aggiungi Libro</string>
+    <string name="book_details">Dettagli del libro</string>
 
     <string name="profile_picture">Immagine profilo</string>
     <string name="send_email">Invia e-mail</string>
@@ -105,4 +107,6 @@
 
     <string name="unknown_authors">Autori sconosciuti</string>
     <string name="hint_owner">Proprietario</string>
+    <string name="no_books">Nessun libro</string>
+    <string name="my_books">I miei libri</string>
 </resources>

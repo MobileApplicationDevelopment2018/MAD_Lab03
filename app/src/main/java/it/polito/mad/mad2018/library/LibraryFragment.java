@@ -1,46 +1,27 @@
 package it.polito.mad.mad2018.library;
 
-import android.content.Context;
-import android.graphics.Color;
-import android.net.Uri;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
 import android.support.design.widget.TabLayout;
 import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentManager;
+import android.support.v4.app.FragmentPagerAdapter;
 import android.support.v4.view.ViewPager;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import it.polito.mad.mad2018.R;
 
-/**
- * A simple {@link Fragment} subclass.
- * Activities that contain this fragment must implement the
- * {@link LibraryFragment.OnFragmentInteractionListener} interface
- * to handle interaction events.
- * Use the {@link LibraryFragment#newInstance} factory method to
- * create an instance of this fragment.
- */
 public class LibraryFragment extends Fragment {
 
-    private OnFragmentInteractionListener mListener;
-    private TabLayout tabLayout;
-    private ViewPager viewPager;
+    public LibraryFragment() { /* Required empty public constructor */ }
 
-    public LibraryFragment() {
-        // Required empty public constructor
-    }
-
-    /**
-     * Use this factory method to create a new instance of
-     * this fragment using the provided parameters.
-     *
-     * @return A new instance of fragment LibraryFragment.
-     */
-    // TODO: Rename and change types and number of parameters
     public static LibraryFragment newInstance() {
-        LibraryFragment fragment = new LibraryFragment();
-        return fragment;
+        return new LibraryFragment();
     }
 
     @Override
@@ -49,17 +30,18 @@ public class LibraryFragment extends Fragment {
     }
 
     @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container,
+    public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        // Inflate the layout for this fragment
+
         View view = inflater.inflate(R.layout.fragment_library, container, false);
 
-        viewPager = (ViewPager) view.findViewById(R.id.viewpager);
+        ViewPager viewPager = view.findViewById(R.id.viewpager);
         setupViewPager(viewPager);
 
-        tabLayout = (TabLayout) view.findViewById(R.id.tabs);
+        TabLayout tabLayout = view.findViewById(R.id.tabs);
         tabLayout.setSelectedTabIndicatorColor(getResources().getColor(R.color.colorAccent));
-        tabLayout.setTabTextColors(Color.parseColor("#FFFFFF"), getResources().getColor(R.color.colorAccent));
+        tabLayout.setTabTextColors(getResources().getColor(android.R.color.white),
+                getResources().getColor(R.color.colorAccent));
         tabLayout.setupWithViewPager(viewPager);
 
         return view;
@@ -67,41 +49,39 @@ public class LibraryFragment extends Fragment {
 
     private void setupViewPager(ViewPager viewPager) {
         ViewPagerAdapter adapter = new ViewPagerAdapter(getChildFragmentManager());
-        adapter.addFragment(new MyBooksFragment(), "My Books");
-        adapter.addFragment(new LentBooksFragment(), "Lent");
-        adapter.addFragment(new BorrowedBooksFragment(), "Borrowed");
+        adapter.addFragment(MyBooksFragment.newInstance(), getResources().getString(R.string.my_books));
+        adapter.addFragment(LentBooksFragment.newInstance(), getResources().getString(R.string.lent_books));
+        adapter.addFragment(BorrowedBooksFragment.newInstance(), getResources().getString(R.string.borrowed_books));
         viewPager.setAdapter(adapter);
     }
 
-    // TODO: Rename method, update argument and hook method into UI event
-    public void onButtonPressed(Uri uri) {
+    private static class ViewPagerAdapter extends FragmentPagerAdapter {
 
-    }
+        private final List<Fragment> mFragmentList = new ArrayList<>();
+        private final List<String> mFragmentTitleList = new ArrayList<>();
 
-    @Override
-    public void onAttach(Context context) {
-        super.onAttach(context);
+        ViewPagerAdapter(FragmentManager manager) {
+            super(manager);
+        }
 
-    }
+        @Override
+        public Fragment getItem(int position) {
+            return mFragmentList.get(position);
+        }
 
-    @Override
-    public void onDetach() {
-        super.onDetach();
-        mListener = null;
-    }
+        @Override
+        public int getCount() {
+            return mFragmentList.size();
+        }
 
-    /**
-     * This interface must be implemented by activities that contain this
-     * fragment to allow an interaction in this fragment to be communicated
-     * to the activity and potentially other fragments contained in that
-     * activity.
-     * <p>
-     * See the Android Training lesson <a href=
-     * "http://developer.android.com/training/basics/fragments/communicating.html"
-     * >Communicating with Other Fragments</a> for more information.
-     */
-    public interface OnFragmentInteractionListener {
-        // TODO: Update argument type and name
-        void onFragmentInteraction(Uri uri);
+        void addFragment(Fragment fragment, String title) {
+            mFragmentList.add(fragment);
+            mFragmentTitleList.add(title);
+        }
+
+        @Override
+        public CharSequence getPageTitle(int position) {
+            return mFragmentTitleList.get(position);
+        }
     }
 }

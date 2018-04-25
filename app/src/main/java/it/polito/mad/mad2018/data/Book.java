@@ -1,7 +1,9 @@
 package it.polito.mad.mad2018.data;
 
 import android.content.res.Resources;
+import android.support.annotation.IntDef;
 import android.support.annotation.NonNull;
+import android.support.annotation.StringRes;
 import android.text.TextUtils;
 
 import com.algolia.search.saas.Client;
@@ -26,10 +28,14 @@ import org.json.JSONObject;
 
 import java.io.ByteArrayOutputStream;
 import java.io.Serializable;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
 
+import it.polito.mad.mad2018.MAD2018Application;
 import it.polito.mad.mad2018.R;
 import it.polito.mad.mad2018.utils.PictureUtilities;
 import it.polito.mad.mad2018.utils.Utilities;
@@ -81,7 +87,7 @@ public class Book implements Serializable {
     }
 
     public Book(String isbn, @NonNull String title, @NonNull List<String> authors, @NonNull String language,
-                String publisher, int year, String conditions, @NonNull List<String> tags,
+                String publisher, int year, @NonNull BookConditions conditions, @NonNull List<String> tags,
                 @NonNull Resources resources) {
         this.bookId = generateBookId();
         this.data = new Data();
@@ -98,7 +104,7 @@ public class Book implements Serializable {
         this.data.bookInfo.publisher = Utilities.trimString(publisher, resources.getInteger(R.integer.max_length_publisher));
         this.data.bookInfo.year = year;
 
-        this.data.bookInfo.conditions = conditions;
+        this.data.bookInfo.bookConditions = conditions;
         for (String tag : tags) {
             if (!Utilities.isNullOrWhitespace(tag)) {
                 this.data.bookInfo.tags.add(Utilities.trimString(tag, resources.getInteger(R.integer.max_length_tag)));
@@ -206,7 +212,7 @@ public class Book implements Serializable {
     }
 
     public String getConditions() {
-        return this.data.bookInfo.conditions;
+        return this.data.bookInfo.bookConditions.toString();
     }
 
     public List<String> getTags() {
@@ -308,7 +314,7 @@ public class Book implements Serializable {
             public String language;
             public String publisher;
             public int year;
-            public String conditions;
+            public BookConditions bookConditions;
             public List<String> tags;
 
             public BookInfo() {
@@ -318,7 +324,7 @@ public class Book implements Serializable {
                 this.language = null;
                 this.publisher = null;
                 this.year = INITIAL_YEAR;
-                this.conditions = null;
+                this.bookConditions = new BookConditions();
                 this.tags = new ArrayList<>();
             }
 
@@ -331,6 +337,57 @@ public class Book implements Serializable {
                     return null;
                 }
             }
+        }
+    }
+
+    public static final class BookConditions implements Serializable {
+        private static final int MINT = 40;
+        private static final int GOOD = 30;
+        private static final int FAIR = 20;
+        private static final int POOR = 10;
+
+        public int value;
+
+        private BookConditions() {
+            this(MINT);
+        }
+
+        private BookConditions(@Conditions int value) {
+            this.value = value;
+        }
+
+        @StringRes
+        private static int getStringId(@Conditions int value) {
+            switch (value) {
+                case MINT:
+                default:
+                    return R.string.add_book_condition_mint;
+                case GOOD:
+                    return R.string.add_book_condition_good;
+                case FAIR:
+                    return R.string.add_book_condition_fair;
+                case POOR:
+                    return R.string.add_book_condition_poor;
+            }
+        }
+
+        public static List<BookConditions> values() {
+            return Arrays.asList(
+                    new BookConditions(MINT),
+                    new BookConditions(GOOD),
+                    new BookConditions(FAIR),
+                    new BookConditions(POOR)
+            );
+        }
+
+        @Override
+        public String toString() {
+            return MAD2018Application.applicationContext.getString(getStringId(this.value));
+        }
+
+        @Retention(RetentionPolicy.SOURCE)
+        @IntDef({MINT, GOOD, FAIR, POOR})
+        private @interface Conditions {
         }
     }
 }

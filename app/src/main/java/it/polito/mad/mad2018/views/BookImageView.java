@@ -42,7 +42,7 @@ public class BookImageView extends AppCompatImageView implements AlgoliaHitView 
 
         GlideApp.with(getContext())
                 .load(reference)
-                .placeholder(R.drawable.default_book_preview)
+                .placeholder(R.drawable.ic_default_book_preview)
                 .transition(DrawableTransitionOptions.withCrossFade())
                 .centerCrop()
                 .into(this);

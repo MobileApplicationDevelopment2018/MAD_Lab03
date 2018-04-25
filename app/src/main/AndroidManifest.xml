@@ -55,21 +55,34 @@
         <activity
             android:name=".EditProfile"
             android:exported="true"
-            android:label="@string/edit_profile" />
+            android:label="@string/edit_profile"
+            android:theme="@style/AppTheme" />
+        <activity
+            android:name=".library.AddBookActivity"
+            android:label="@string/add_book"
+            android:theme="@style/AppTheme" />
+        <activity
+            android:name=".BookInfoActivity"
+            android:label="@string/book_details"
+            android:theme="@style/AppTheme" />
         <activity
             android:name=".barcodereader.BarcodeCaptureActivity"
             android:label="@string/scan_barcode"
             android:screenOrientation="portrait" />
 
         <!-- For google maps API -->
-        <!--<meta-data
+        <!--
+        <meta-data
             android:name="com.google.android.gms.version"
             android:value="@integer/google_play_services_version" />
 
-        <!- The API key for Google Maps-based APIs. -->
-        <!--<meta-data
+        <!- The API key for Google Maps-based APIs.
+        -->
+        <!--
+            <meta-data
             android:name="com.google.android.geo.API_KEY"
-            android:value="AIzaSyBkf3V8-K1H4LocByMESejcZxn2h_dqrS0" />-->
+            android:value="AIzaSyBkf3V8-K1H4LocByMESejcZxn2h_dqrS0" />
+        -->
 
     </application>
 

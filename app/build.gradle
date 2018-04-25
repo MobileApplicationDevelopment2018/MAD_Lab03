@@ -22,7 +22,6 @@ android {
     }
     defaultConfig {
         resConfigs "en", "it"
-        vectorDrawables.useSupportLibrary = true
         multiDexEnabled true
     }
 

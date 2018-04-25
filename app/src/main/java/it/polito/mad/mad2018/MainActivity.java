@@ -5,7 +5,6 @@ import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.drawable.Drawable;
-import android.net.Uri;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.StringRes;
@@ -44,7 +43,7 @@ import it.polito.mad.mad2018.utils.GlideRequest;
 import it.polito.mad.mad2018.utils.Utilities;
 
 public class MainActivity extends AppCompatActivityDialog<MainActivity.DialogID>
-        implements NavigationView.OnNavigationItemSelectedListener, BookInfoFragment.OnFragmentInteractionListener {
+        implements NavigationView.OnNavigationItemSelectedListener {
 
     private static final int RC_SIGN_IN = 1;
     private static final int RC_EDIT_PROFILE = 5;
@@ -390,12 +389,6 @@ public class MainActivity extends AppCompatActivityDialog<MainActivity.DialogID>
         if (dialog != null) {
             setDialogInstance(dialog);
         }
-    }
-
-    @Override
-    public void onFragmentInteraction(Uri uri) {
-        // I didn't put anything in here, but we can if we want to do something
-        // It was just requested for fragment intercommunication.
     }
 
     public enum DialogID {
