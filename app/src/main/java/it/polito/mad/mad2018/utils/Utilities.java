@@ -21,10 +21,6 @@ public class Utilities {
                 .show();
     }
 
-    public static boolean isValidLocation(String s) {
-        return s != null && s.matches("((\\p{L}\\p{M}*)|\\p{Zs})+");
-    }
-
     public static boolean isNullOrWhitespace(String s) {
         if (s == null)
             return true;

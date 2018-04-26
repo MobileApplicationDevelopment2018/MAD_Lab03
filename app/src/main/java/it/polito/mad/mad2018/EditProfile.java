@@ -5,6 +5,7 @@ import android.app.Dialog;
 import android.app.ProgressDialog;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.content.res.ColorStateList;
 import android.graphics.Rect;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
@@ -18,10 +19,12 @@ import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.content.FileProvider;
+import android.support.v4.widget.ImageViewCompat;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -29,6 +32,11 @@ import android.widget.Toast;
 
 import com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions;
 import com.bumptech.glide.signature.ObjectKey;
+import com.google.android.gms.common.api.Status;
+import com.google.android.gms.location.places.AutocompleteFilter;
+import com.google.android.gms.location.places.Place;
+import com.google.android.gms.location.places.ui.PlaceAutocompleteFragment;
+import com.google.android.gms.location.places.ui.PlaceSelectionListener;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 
@@ -55,7 +63,7 @@ public class EditProfile extends AppCompatActivityDialog<EditProfile.DialogID> {
     private static final int PERMISSIONS_REQUEST_EXTERNAL_STORAGE = 4;
     private static final int PERMISSIONS_REQUEST_CAMERA = 5;
 
-    private EditText username, location, biography;
+    private EditText username, biography;
     private UserProfile originalProfile, currentProfile;
     private int imageViewHeight;
 
@@ -68,7 +76,6 @@ public class EditProfile extends AppCompatActivityDialog<EditProfile.DialogID> {
         setContentView(R.layout.activity_edit_profile);
 
         username = findViewById(R.id.ep_input_username);
-        location = findViewById(R.id.ep_input_location);
         biography = findViewById(R.id.ep_input_biography);
 
         pictureProcessingTask = null;
@@ -96,6 +103,7 @@ public class EditProfile extends AppCompatActivityDialog<EditProfile.DialogID> {
 
         // Fill the views with the data
         fillViews(currentProfile);
+        setupFragmentAutocomplete(currentProfile.getLocation());
         attachListenerHideFloatingActionButton();
 
         final FloatingActionButton floatingActionButton = findViewById(R.id.ep_camera_button);
@@ -104,13 +112,6 @@ public class EditProfile extends AppCompatActivityDialog<EditProfile.DialogID> {
         username.addTextChangedListener(
                 new TextWatcherUtilities.GenericTextWatcher(username, getString(R.string.invalid_username),
                         string -> !Utilities.isNullOrWhitespace(string)));
-
-        location.addTextChangedListener(
-                new TextWatcherUtilities.GenericTextWatcherEmptyOrInvalid(location,
-                        getString(R.string.invalid_location_empty),
-                        getString(R.string.invalid_location_wrong),
-                        string -> !Utilities.isNullOrWhitespace(string),
-                        string -> Utilities.isValidLocation(string)));
 
         if (savedInstanceState == null && originalProfile == null) {
             Toast.makeText(this, R.string.complete_profile,
@@ -273,8 +274,13 @@ public class EditProfile extends AppCompatActivityDialog<EditProfile.DialogID> {
     private void commitChanges() {
         updateProfileInfo(currentProfile);
 
-        if (!currentProfile.isValid()) {
-            this.openDialog(DialogID.DIALOG_ERROR_INCORRECT_VALUES, true);
+        if (Utilities.isNullOrWhitespace(currentProfile.getUsername())) {
+            this.openDialog(DialogID.DIALOG_ERROR_INCORRECT_USERNAME, true);
+            return;
+        }
+
+        if (Utilities.isNullOrWhitespace(currentProfile.getLocation())) {
+            this.openDialog(DialogID.DIALOG_ERROR_INCORRECT_LOCATION, true);
             return;
         }
 
@@ -336,9 +342,45 @@ public class EditProfile extends AppCompatActivityDialog<EditProfile.DialogID> {
         finish();
     }
 
+    private void setupFragmentAutocomplete(String location) {
+        PlaceAutocompleteFragment autocompleteFragment = (PlaceAutocompleteFragment)
+                getFragmentManager().findFragmentById(R.id.ep_place_autocomplete_fragment);
+
+        autocompleteFragment.setText(location);
+        autocompleteFragment.setHint(getString(R.string.hint_location));
+
+        assert autocompleteFragment.getView() != null;
+
+        ImageView searchIcon = autocompleteFragment.getView().findViewById(R.id.place_autocomplete_search_button);
+        searchIcon.setImageDrawable(getResources().getDrawable(R.drawable.ic_location_on_black_24dp));
+        ImageViewCompat.setImageTintList(searchIcon,
+                ColorStateList.valueOf(ContextCompat.getColor(this, R.color.colorPrimary)));
+
+        autocompleteFragment.setFilter(new AutocompleteFilter.Builder()
+                .setTypeFilter(AutocompleteFilter.TYPE_FILTER_CITIES)
+                .build());
+
+        autocompleteFragment.setOnPlaceSelectedListener(new PlaceSelectionListener() {
+            @Override
+            public void onPlaceSelected(Place place) {
+                currentProfile.update(place);
+            }
+
+            @Override
+            public void onError(Status status) {
+            }
+        });
+
+        autocompleteFragment.getView().findViewById(R.id.place_autocomplete_clear_button)
+                .setOnClickListener(v -> {
+                    autocompleteFragment.setText("");
+                    v.setVisibility(View.GONE);
+                    currentProfile.update(null);
+                });
+    }
+
     private void fillViews(UserProfile profile) {
         username.setText(profile.getUsername());
-        location.setText(profile.getLocation());
         biography.setText(profile.getBiography());
 
         loadImageProfile(profile);
@@ -364,10 +406,9 @@ public class EditProfile extends AppCompatActivityDialog<EditProfile.DialogID> {
 
     private void updateProfileInfo(UserProfile profile) {
         String usernameStr = username.getText().toString();
-        String locationStr = location.getText().toString();
         String biographyStr = biography.getText().toString();
 
-        profile.update(usernameStr, locationStr, biographyStr);
+        profile.update(usernameStr, biographyStr);
     }
 
     @Override
@@ -393,8 +434,12 @@ public class EditProfile extends AppCompatActivityDialog<EditProfile.DialogID> {
                         .show();
                 break;
 
-            case DIALOG_ERROR_INCORRECT_VALUES:
-                dialogInstance = Utilities.openErrorDialog(this, R.string.incorrect_values);
+            case DIALOG_ERROR_INCORRECT_USERNAME:
+                dialogInstance = Utilities.openErrorDialog(this, R.string.incorrect_username);
+                break;
+
+            case DIALOG_ERROR_INCORRECT_LOCATION:
+                dialogInstance = Utilities.openErrorDialog(this, R.string.incorrect_location);
                 break;
 
             case DIALOG_ERROR_FAILED_SAVE_DATA:
@@ -484,7 +529,8 @@ public class EditProfile extends AppCompatActivityDialog<EditProfile.DialogID> {
         DIALOG_CHOOSE_PICTURE,
         DIALOG_SAVING,
         DIALOG_CONFIRM_EXIT,
-        DIALOG_ERROR_INCORRECT_VALUES,
+        DIALOG_ERROR_INCORRECT_USERNAME,
+        DIALOG_ERROR_INCORRECT_LOCATION,
         DIALOG_ERROR_FAILED_SAVE_DATA,
         DIALOG_ERROR_FAILED_OBTAIN_PICTURE
     }

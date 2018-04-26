@@ -4,8 +4,8 @@ import android.content.res.Resources;
 import android.os.AsyncTask;
 import android.support.annotation.NonNull;
 import android.util.Base64;
-import android.util.Patterns;
 
+import com.google.android.gms.location.places.Place;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
@@ -20,6 +20,7 @@ import com.google.firebase.storage.StorageReference;
 import java.io.ByteArrayOutputStream;
 import java.io.Serializable;
 
+import it.polito.mad.mad2018.MAD2018Application;
 import it.polito.mad.mad2018.R;
 import it.polito.mad.mad2018.utils.PictureUtilities;
 import it.polito.mad.mad2018.utils.Utilities;
@@ -82,9 +83,6 @@ public class UserProfile implements Serializable {
             this.data.profile.username = getUsernameFromEmail(this.data.profile.email);
 
         }
-
-        this.data.profile.username = Utilities.trimString(this.data.profile.username, resources.getInteger(R.integer.max_length_username));
-        this.data.profile.location = resources.getString(R.string.default_city);
     }
 
     private static String getUsernameFromEmail(@NonNull String email) {
@@ -146,15 +144,19 @@ public class UserProfile implements Serializable {
         setProfilePicture(null, false);
     }
 
-    public void update(@NonNull String username, @NonNull String location, @NonNull String biography) {
+    public void update(@NonNull String username, @NonNull String biography) {
         this.data.profile.username = username;
-        this.data.profile.location = location;
         this.data.profile.biography = biography;
+    }
+
+    public void update(Place place) {
+        this.data.profile.location = place == null
+                ? null
+                : new Data.Location(place);
     }
 
     private void trimFields(@NonNull Resources resources) {
         this.data.profile.username = Utilities.trimString(this.data.profile.username, resources.getInteger(R.integer.max_length_username));
-        this.data.profile.location = Utilities.trimString(this.data.profile.location, resources.getInteger(R.integer.max_length_location));
         this.data.profile.biography = Utilities.trimString(this.data.profile.biography, resources.getInteger(R.integer.max_length_biography));
     }
 
@@ -167,7 +169,16 @@ public class UserProfile implements Serializable {
     }
 
     public String getLocation() {
-        return this.data.profile.location;
+        return this.data.profile.location == null
+                ? null
+                : this.data.profile.location.name;
+    }
+
+    public String getLocationOrDefault() {
+        return getLocation() == null
+                ? MAD2018Application.applicationContext.getString(R.string.default_city)
+                : getLocation();
+
     }
 
     public String getBiography() {
@@ -251,13 +262,6 @@ public class UserProfile implements Serializable {
 
     }
 
-    public boolean isValid() {
-        return Patterns.EMAIL_ADDRESS.matcher(this.data.profile.email).matches() &&
-                !Utilities.isNullOrWhitespace(this.data.profile.username) &&
-                !Utilities.isNullOrWhitespace(this.data.profile.location) &&
-                Utilities.isValidLocation(this.data.profile.location);
-    }
-
     public Task<Void> saveToFirebase(@NonNull Resources resources) {
         this.trimFields(resources);
 
@@ -317,7 +321,7 @@ public class UserProfile implements Serializable {
 
             public String email;
             public String username;
-            public String location;
+            public Location location;
             public String biography;
             public boolean hasProfilePicture;
             public long profilePictureLastModified;
@@ -336,14 +340,13 @@ public class UserProfile implements Serializable {
             public Profile(@NonNull Profile other) {
                 this.email = other.email;
                 this.username = other.username;
-                this.location = other.location;
+                this.location = other.location == null ? null : new Location(other.location);
                 this.biography = other.biography;
                 this.hasProfilePicture = other.hasProfilePicture;
                 this.profilePictureLastModified = other.profilePictureLastModified;
                 this.profilePictureThumbnail = other.profilePictureThumbnail;
             }
         }
-
 
         private static class Statistics implements Serializable {
             public float rating;
@@ -363,6 +366,42 @@ public class UserProfile implements Serializable {
                 this.lentBooks = other.lentBooks;
                 this.borrowedBooks = other.borrowedBooks;
                 this.toBeReturnedBooks = other.toBeReturnedBooks;
+            }
+        }
+
+        private static class Location implements Serializable {
+            public String name;
+            public double latitude;
+            public double longitude;
+
+            public Location() { /* Required by Firebase */ }
+
+            public Location(Location other) {
+                this.name = other.name;
+                this.latitude = other.latitude;
+                this.longitude = other.longitude;
+            }
+
+            public Location(@NonNull Place place) {
+                this.name = place.getName().toString();
+                this.latitude = place.getLatLng().latitude;
+                this.longitude = place.getLatLng().longitude;
+            }
+
+            @Override
+            public boolean equals(Object other) {
+                if (this == other) {
+                    return true;
+                }
+
+                if (!(other instanceof Location)) {
+                    return false;
+                }
+
+                Location otherL = (Location) other;
+                return this.name.equals(otherL.name) &&
+                        Double.compare(this.latitude, otherL.latitude) == 0 &&
+                        Double.compare(this.longitude, otherL.longitude) == 0;
             }
         }
     }

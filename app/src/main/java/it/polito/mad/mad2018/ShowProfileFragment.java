@@ -76,6 +76,7 @@ public class ShowProfileFragment extends Fragment {
 
         // ShowCity button
         final ImageButton showCityButton = getView().findViewById(R.id.sp_locate_icon);
+        showCityButton.setEnabled(profile.getLocation() != null);
         showCityButton.setOnClickListener(v -> {
             Uri uri = Uri.parse("http://maps.google.co.in/maps?q=" + profile.getLocation());
             Intent showCity = new Intent(Intent.ACTION_VIEW, uri);
@@ -106,7 +107,7 @@ public class ShowProfileFragment extends Fragment {
         TextView toBeReturnedBooks = getView().findViewById(R.id.sp_to_be_returned_number);
 
         username.setText(profile.getUsername());
-        location.setText(profile.getLocation());
+        location.setText(profile.getLocationOrDefault());
         biography.setText(profile.getBiography());
 
         GlideRequest<Drawable> thumbnail = GlideApp

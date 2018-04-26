@@ -2,6 +2,8 @@ package it.polito.mad.mad2018.library;
 
 import android.os.Bundle;
 import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
+import android.support.design.widget.AppBarLayout;
 import android.support.design.widget.TabLayout;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
@@ -17,6 +19,9 @@ import java.util.List;
 import it.polito.mad.mad2018.R;
 
 public class LibraryFragment extends Fragment {
+
+    private TabLayout tabLayout;
+    private AppBarLayout appBarLayout;
 
     public LibraryFragment() { /* Required empty public constructor */ }
 
@@ -38,13 +43,28 @@ public class LibraryFragment extends Fragment {
         ViewPager viewPager = view.findViewById(R.id.viewpager);
         setupViewPager(viewPager);
 
-        TabLayout tabLayout = view.findViewById(R.id.tabs);
-        tabLayout.setSelectedTabIndicatorColor(getResources().getColor(R.color.colorAccent));
-        tabLayout.setTabTextColors(getResources().getColor(android.R.color.white),
-                getResources().getColor(R.color.colorAccent));
+        tabLayout = (TabLayout) inflater.inflate(R.layout.tab_layout, null);
         tabLayout.setupWithViewPager(viewPager);
 
         return view;
+    }
+
+    @Override
+    public void onActivityCreated(@Nullable Bundle savedInstanceState) {
+        super.onActivityCreated(savedInstanceState);
+
+        assert getActivity() != null;
+        getActivity().setTitle(R.string.my_library);
+        appBarLayout = getActivity().findViewById(R.id.app_bar_layout);
+        appBarLayout.addView(tabLayout);
+    }
+
+    @Override
+    public void onDetach() {
+        if (appBarLayout != null) {
+            appBarLayout.removeView(tabLayout);
+        }
+        super.onDetach();
     }
 
     private void setupViewPager(ViewPager viewPager) {

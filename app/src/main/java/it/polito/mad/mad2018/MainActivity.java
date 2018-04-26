@@ -123,6 +123,7 @@ public class MainActivity extends AppCompatActivityDialog<MainActivity.DialogID>
 
         int id = item.getItemId();
 
+
         switch (id) {
             case R.id.nav_explore:
                 this.replaceFragment(ExploreFragment.newInstance());
@@ -188,7 +189,7 @@ public class MainActivity extends AppCompatActivityDialog<MainActivity.DialogID>
                     localProfile = (UserProfile) data.getSerializableExtra(UserProfile.PROFILE_INFO_KEY);
                     localProfile.postCommit();
                     updateNavigationView(); // Need to update the drawer information
-                    this.replaceFragment(ShowProfileFragment.newInstance(localProfile));
+                    this.replaceFragment(ShowProfileFragment.newInstance(localProfile), true);
                 }
                 break;
 
@@ -331,12 +332,16 @@ public class MainActivity extends AppCompatActivityDialog<MainActivity.DialogID>
     }
 
     private void replaceFragment(@NonNull Fragment instance) {
+        replaceFragment(instance, false);
+    }
+
+    private void replaceFragment(@NonNull Fragment instance, boolean force) {
 
         final String fragmentTag = "main_fragment";
         Fragment oldInstance = getSupportFragmentManager()
                 .findFragmentByTag(fragmentTag);
 
-        if (oldInstance == null || !oldInstance.getClass().equals(instance.getClass())) {
+        if (force || oldInstance == null || !oldInstance.getClass().equals(instance.getClass())) {
             getSupportFragmentManager()
                     .beginTransaction()
                     .replace(R.id.content_frame, instance, fragmentTag)
