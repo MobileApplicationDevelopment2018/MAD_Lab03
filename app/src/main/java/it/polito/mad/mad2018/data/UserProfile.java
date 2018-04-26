@@ -5,6 +5,7 @@ import android.os.AsyncTask;
 import android.support.annotation.NonNull;
 import android.util.Base64;
 
+import com.algolia.search.saas.CompletionHandler;
 import com.google.android.gms.location.places.Place;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.FirebaseAuth;
@@ -17,8 +18,16 @@ import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageMetadata;
 import com.google.firebase.storage.StorageReference;
 
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import java.io.ByteArrayOutputStream;
 import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 import it.polito.mad.mad2018.MAD2018Application;
 import it.polito.mad.mad2018.R;
@@ -29,9 +38,11 @@ public class UserProfile implements Serializable {
 
     public static final String PROFILE_INFO_KEY = "profile_info_key";
 
-    public static final String FIREBASE_USERS_KEY = "users";
-    public static final String FIREBASE_DATA_KEY = "data";
-    public static final String FIREBASE_BOOKS_KEY = "books";
+    private static final String FIREBASE_USERS_KEY = "users";
+    private static final String FIREBASE_DATA_KEY = "data";
+    private static final String FIREBASE_BOOKS_KEY = "books";
+    private static final String FIREBASE_OWNED_BOOKS_KEY = "ownedBooks";
+
     private static final String FIREBASE_PROFILE_KEY = "profile";
     private static final String FIREBASE_STORAGE_USERS_FOLDER = "users";
     private static final String FIREBASE_STORAGE_IMAGE_NAME = "profile";
@@ -39,6 +50,8 @@ public class UserProfile implements Serializable {
     private static final int PROFILE_PICTURE_SIZE = 1024;
     private static final int PROFILE_PICTURE_THUMBNAIL_SIZE = 64;
     private static final int PROFILE_PICTURE_QUALITY = 50;
+
+    public static UserProfile localInstance;
 
     private final String uid;
     private final Data data;
@@ -129,7 +142,8 @@ public class UserProfile implements Serializable {
                 .child(FIREBASE_USERS_KEY)
                 .child(userId)
                 .child(FIREBASE_DATA_KEY)
-                .child(FIREBASE_BOOKS_KEY);
+                .child(FIREBASE_BOOKS_KEY)
+                .child(FIREBASE_OWNED_BOOKS_KEY);
     }
 
     public void setProfilePicture(String path, boolean toBeDeleted) {
@@ -169,9 +183,11 @@ public class UserProfile implements Serializable {
     }
 
     public String getLocation() {
-        return this.data.profile.location == null
-                ? null
-                : this.data.profile.location.name;
+        return this.data.profile.location.name;
+    }
+
+    JSONObject getLocationAlgolia() {
+        return this.data.profile.location.toAlgoliaGeoLoc();
     }
 
     public String getLocationOrDefault() {
@@ -277,6 +293,41 @@ public class UserProfile implements Serializable {
         getProfilePictureReferenceFirebase().delete();
     }
 
+    public Task<?> addBook(String bookId) {
+        this.data.books.ownedBooks.put(bookId, true);
+        return FirebaseDatabase.getInstance().getReference()
+                .child(UserProfile.FIREBASE_USERS_KEY)
+                .child(getCurrentUserId())
+                .child(UserProfile.FIREBASE_DATA_KEY)
+                .child(UserProfile.FIREBASE_BOOKS_KEY)
+                .child(UserProfile.FIREBASE_OWNED_BOOKS_KEY)
+                .child(bookId)
+                .setValue(true);
+    }
+
+    public void updateAlgoliaGeoLoc(UserProfile other, @NonNull CompletionHandler completionHandler) {
+
+        if ((other != null && Utilities.equals(this.data.profile.location, other.data.profile.location)) ||
+                this.data.books.ownedBooks.size() == 0) {
+            completionHandler.requestCompleted(null, null);
+            return;
+        }
+
+        JSONObject geoloc = this.getLocationAlgolia();
+        List<JSONObject> bookUpdates = new ArrayList<>();
+
+        for (String bookId : this.data.books.ownedBooks.keySet()) {
+            try {
+                bookUpdates.add(new JSONObject()
+                        .put("_geoloc", geoloc)
+                        .put("objectID", bookId));
+            } catch (JSONException e) { /* Do nothing */ }
+        }
+
+        Book.AlgoliaBookIndex.getInstance()
+                .partialUpdateObjectsAsync(new JSONArray(bookUpdates), completionHandler);
+    }
+
     public AsyncTask<Void, Void, PictureUtilities.CompressedImage> processProfilePictureAsync(
             @NonNull PictureUtilities.CompressImageAsync.OnCompleteListener onCompleteListener) {
 
@@ -306,15 +357,18 @@ public class UserProfile implements Serializable {
 
         public Profile profile;
         public Statistics statistics;
+        public Books books;
 
         public Data() {
             this.profile = new Profile();
             this.statistics = new Statistics();
+            this.books = new Books();
         }
 
         public Data(@NonNull Data other) {
             this.profile = new Profile(other.profile);
             this.statistics = new Statistics(other.statistics);
+            this.books = new Books(other.books);
         }
 
         private static class Profile implements Serializable {
@@ -330,7 +384,7 @@ public class UserProfile implements Serializable {
             public Profile() {
                 this.email = null;
                 this.username = null;
-                this.location = null;
+                this.location = new Location();
                 this.biography = null;
                 this.hasProfilePicture = false;
                 this.profilePictureLastModified = 0;
@@ -340,7 +394,7 @@ public class UserProfile implements Serializable {
             public Profile(@NonNull Profile other) {
                 this.email = other.email;
                 this.username = other.username;
-                this.location = other.location == null ? null : new Location(other.location);
+                this.location = new Location(other.location);
                 this.biography = other.biography;
                 this.hasProfilePicture = other.hasProfilePicture;
                 this.profilePictureLastModified = other.profilePictureLastModified;
@@ -366,6 +420,18 @@ public class UserProfile implements Serializable {
                 this.lentBooks = other.lentBooks;
                 this.borrowedBooks = other.borrowedBooks;
                 this.toBeReturnedBooks = other.toBeReturnedBooks;
+            }
+        }
+
+        private static class Books implements Serializable {
+            public Map<String, Boolean> ownedBooks;
+
+            public Books() {
+                this.ownedBooks = new HashMap<>();
+            }
+
+            public Books(@NonNull Books other) {
+                this.ownedBooks = new HashMap<>(other.ownedBooks);
             }
         }
 
@@ -402,6 +468,18 @@ public class UserProfile implements Serializable {
                 return this.name.equals(otherL.name) &&
                         Double.compare(this.latitude, otherL.latitude) == 0 &&
                         Double.compare(this.longitude, otherL.longitude) == 0;
+            }
+
+            private JSONObject toAlgoliaGeoLoc() {
+                try {
+                    JSONObject jsonObject = new JSONObject();
+                    jsonObject.put("lat", this.latitude);
+                    jsonObject.put("lon", this.longitude);
+                    return jsonObject;
+                } catch (JSONException e) {
+                    return null;
+                }
+
             }
         }
     }

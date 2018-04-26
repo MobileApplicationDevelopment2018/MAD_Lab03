@@ -291,43 +291,51 @@ public class EditProfile extends AppCompatActivityDialog<EditProfile.DialogID> {
                 this.openDialog(DialogID.DIALOG_ERROR_FAILED_SAVE_DATA, true);
             };
 
-            // A new profile picture has to be uploaded: it is prepared in background
-            // and then it is uploaded to firebase and the other changes are committed
-            if (currentProfile.imageUpdated(originalProfile) && currentProfile.hasProfilePicture()) {
-                this.isCommitting = true;
-                this.openDialog(DialogID.DIALOG_SAVING, false);
-
-                pictureProcessingTask = currentProfile.processProfilePictureAsync(picture -> {
-
-                    OnSuccessListener<Object> onSuccess = t -> {
-                        isCommitting = false;
-                        currentProfile.saveToFirebase(this.getResources())
-                                .addOnFailureListener(onFailure);
-                        this.onChangesCommitted();
-                    };
-
-                    if (picture == null) {
-                        onFailure.onFailure(new Exception());
-                        return;
-                    }
-
-                    currentProfile.setProfilePictureThumbnail(picture.getThumbnail());
-                    currentProfile.uploadProfilePictureToFirebase(picture.getPicture())
-                            .addOnSuccessListener(this, onSuccess)
-                            .addOnFailureListener(this, onFailure);
-                });
-            }
-
-            // Otherwise, there is no need for the asynchronous pre-processing phase
-            else {
-                currentProfile.saveToFirebase(this.getResources())
-                        .addOnFailureListener(onFailure);
-                if (currentProfile.imageUpdated(originalProfile) && !currentProfile.hasProfilePicture()) {
-                    currentProfile.deleteProfilePictureFromFirebase();
+            currentProfile.updateAlgoliaGeoLoc(originalProfile, (obj, e) -> {
+                if (e != null) {
+                    onFailure.onFailure(e);
+                    return;
                 }
 
-                this.onChangesCommitted();
-            }
+                // A new profile picture has to be uploaded: it is prepared in background
+                // and then it is uploaded to firebase and the other changes are committed
+                if (currentProfile.imageUpdated(originalProfile) && currentProfile.hasProfilePicture()) {
+                    this.isCommitting = true;
+                    this.openDialog(DialogID.DIALOG_SAVING, false);
+
+                    pictureProcessingTask = currentProfile.processProfilePictureAsync(picture -> {
+
+                        OnSuccessListener<Object> onSuccess = t -> {
+                            isCommitting = false;
+                            currentProfile.saveToFirebase(this.getResources())
+                                    .addOnFailureListener(onFailure);
+                            this.onChangesCommitted();
+                        };
+
+                        if (picture == null) {
+                            onFailure.onFailure(new Exception());
+                            return;
+                        }
+
+                        currentProfile.setProfilePictureThumbnail(picture.getThumbnail());
+                        currentProfile.uploadProfilePictureToFirebase(picture.getPicture())
+                                .addOnSuccessListener(this, onSuccess)
+                                .addOnFailureListener(this, onFailure);
+                    });
+                }
+
+                // Otherwise, there is no need for the asynchronous pre-processing phase
+                else {
+                    currentProfile.saveToFirebase(this.getResources())
+                            .addOnFailureListener(onFailure);
+                    if (currentProfile.imageUpdated(originalProfile) && !currentProfile.hasProfilePicture()) {
+                        currentProfile.deleteProfilePictureFromFirebase();
+                    }
+
+                    this.onChangesCommitted();
+                }
+            });
+
 
         } else {
             setResult(RESULT_CANCELED);

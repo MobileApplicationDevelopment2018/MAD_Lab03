@@ -50,7 +50,6 @@ public class MainActivity extends AppCompatActivityDialog<MainActivity.DialogID>
     private static final int RC_EDIT_PROFILE_WELCOME = 6;
 
     private FirebaseAuth firebaseAuth;
-    private UserProfile localProfile;
     private ValueEventListener profileListener;
 
     @Override
@@ -71,11 +70,6 @@ public class MainActivity extends AppCompatActivityDialog<MainActivity.DialogID>
         NavigationView navigationView = findViewById(R.id.nav_view);
         navigationView.setNavigationItemSelectedListener(this);
 
-        // Profile already cached locally
-        if (savedInstanceState != null) {
-            localProfile = (UserProfile) savedInstanceState.getSerializable(UserProfile.PROFILE_INFO_KEY);
-        }
-
         // User not signed-in
         if (firebaseAuth.getCurrentUser() == null) {
             this.signIn();
@@ -90,7 +84,7 @@ public class MainActivity extends AppCompatActivityDialog<MainActivity.DialogID>
     protected void onStart() {
         super.onStart();
 
-        if (localProfile == null && firebaseAuth.getCurrentUser() != null) {
+        if (UserProfile.localInstance == null && firebaseAuth.getCurrentUser() != null) {
             setOnProfileLoadedListener();
         }
     }
@@ -114,8 +108,6 @@ public class MainActivity extends AppCompatActivityDialog<MainActivity.DialogID>
     @Override
     public void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
-
-        outState.putSerializable(UserProfile.PROFILE_INFO_KEY, localProfile);
     }
 
     @Override
@@ -134,7 +126,7 @@ public class MainActivity extends AppCompatActivityDialog<MainActivity.DialogID>
                 break;
 
             case R.id.nav_profile:
-                this.replaceFragment(ShowProfileFragment.newInstance(localProfile));
+                this.replaceFragment(ShowProfileFragment.newInstance(UserProfile.localInstance));
                 break;
 
             case R.id.nav_sign_out:
@@ -186,17 +178,17 @@ public class MainActivity extends AppCompatActivityDialog<MainActivity.DialogID>
 
             case RC_EDIT_PROFILE:
                 if (resultCode == RESULT_OK) {
-                    localProfile = (UserProfile) data.getSerializableExtra(UserProfile.PROFILE_INFO_KEY);
-                    localProfile.postCommit();
+                    UserProfile.localInstance = (UserProfile) data.getSerializableExtra(UserProfile.PROFILE_INFO_KEY);
+                    UserProfile.localInstance.postCommit();
                     updateNavigationView(); // Need to update the drawer information
-                    this.replaceFragment(ShowProfileFragment.newInstance(localProfile), true);
+                    this.replaceFragment(ShowProfileFragment.newInstance(UserProfile.localInstance), true);
                 }
                 break;
 
             case RC_EDIT_PROFILE_WELCOME:
                 if (resultCode == RESULT_OK) {
-                    localProfile = (UserProfile) data.getSerializableExtra(UserProfile.PROFILE_INFO_KEY);
-                    localProfile.postCommit();
+                    UserProfile.localInstance = (UserProfile) data.getSerializableExtra(UserProfile.PROFILE_INFO_KEY);
+                    UserProfile.localInstance.postCommit();
                     updateNavigationView(); // Need to update the drawer information
                 }
                 break;
@@ -218,6 +210,8 @@ public class MainActivity extends AppCompatActivityDialog<MainActivity.DialogID>
         ImageView profilePicture = header.findViewById(R.id.nh_profile_picture);
         TextView username = header.findViewById(R.id.nh_username);
         TextView email = header.findViewById(R.id.nh_email);
+
+        UserProfile localProfile = UserProfile.localInstance;
 
         username.setText(localProfile.getUsername());
         email.setText(localProfile.getEmail());
@@ -264,7 +258,7 @@ public class MainActivity extends AppCompatActivityDialog<MainActivity.DialogID>
     }
 
     private void onSignOut() {
-        localProfile = null;
+        UserProfile.localInstance = null;
         showDefaultFragment();
         signIn();
     }
@@ -292,9 +286,9 @@ public class MainActivity extends AppCompatActivityDialog<MainActivity.DialogID>
                 if (data == null) {
                     completeRegistration();
                 } else {
-                    localProfile = new UserProfile(data, getResources());
+                    UserProfile.localInstance = new UserProfile(data, getResources());
                     updateNavigationView();
-                    showToast(getString(R.string.sign_in_welcome_back) + " " + localProfile.getUsername());
+                    showToast(getString(R.string.sign_in_welcome_back) + " " + UserProfile.localInstance.getUsername());
                 }
             }
 
@@ -320,10 +314,10 @@ public class MainActivity extends AppCompatActivityDialog<MainActivity.DialogID>
     private void completeRegistration() {
 
         assert firebaseAuth.getCurrentUser() != null;
-        localProfile = new UserProfile(firebaseAuth.getCurrentUser(), this.getResources());
-        localProfile.saveToFirebase(this.getResources());
+        UserProfile.localInstance = new UserProfile(firebaseAuth.getCurrentUser(), this.getResources());
+        UserProfile.localInstance.saveToFirebase(this.getResources());
 
-        String message = getString(R.string.sign_in_welcome) + " " + localProfile.getUsername();
+        String message = getString(R.string.sign_in_welcome) + " " + UserProfile.localInstance.getUsername();
         Snackbar.make(findViewById(R.id.main_coordinator_layout), message, Snackbar.LENGTH_LONG)
                 .setAction(R.string.edit_profile, v -> showEditProfileActivity(RC_EDIT_PROFILE_WELCOME))
                 .show();
@@ -370,7 +364,7 @@ public class MainActivity extends AppCompatActivityDialog<MainActivity.DialogID>
 
     private void showEditProfileActivity(int code) {
         Intent toEditProfile = new Intent(getApplicationContext(), EditProfile.class);
-        toEditProfile.putExtra(UserProfile.PROFILE_INFO_KEY, localProfile);
+        toEditProfile.putExtra(UserProfile.PROFILE_INFO_KEY, UserProfile.localInstance);
         startActivityForResult(toEditProfile, code);
     }
 

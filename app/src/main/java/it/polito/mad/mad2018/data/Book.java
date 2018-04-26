@@ -239,11 +239,7 @@ public class Book implements Serializable {
         return Book.getBookThumbnailReference(this.bookId);
     }
 
-    public Task<?> saveToFirebase() {
-        FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
-        assert currentUser != null;
-
-        this.data.uid = currentUser.getUid();
+    public Task<?> saveToFirebase(@NonNull UserProfile owner) {
 
         List<Task<?>> tasks = new ArrayList<>();
 
@@ -252,13 +248,7 @@ public class Book implements Serializable {
                 .child(bookId)
                 .setValue(this.data));
 
-        tasks.add(FirebaseDatabase.getInstance().getReference()
-                .child(UserProfile.FIREBASE_USERS_KEY)
-                .child(this.data.uid)
-                .child(UserProfile.FIREBASE_DATA_KEY)
-                .child(UserProfile.FIREBASE_BOOKS_KEY)
-                .child(bookId)
-                .setValue(true));
+        tasks.add(owner.addBook(this.bookId));
 
         return Tasks.whenAllSuccess(tasks);
     }
@@ -275,19 +265,19 @@ public class Book implements Serializable {
         return Tasks.whenAllSuccess(tasks);
     }
 
-    public void saveToAlgolia(CompletionHandler completionHandler) {
+    public void saveToAlgolia(@NonNull UserProfile owner, @NonNull CompletionHandler completionHandler) {
 
-        JSONObject object = this.data.bookInfo.toJSON(this.bookId);
+        JSONObject object = this.data.bookInfo.toJSON(this.bookId, owner.getLocationAlgolia());
         if (object != null) {
             AlgoliaBookIndex.getInstance()
                     .addObjectAsync(object, bookId, completionHandler);
         }
     }
 
-    private static class AlgoliaBookIndex {
+    static class AlgoliaBookIndex {
         private static Index instance = null;
 
-        private static Index getInstance() {
+        static Index getInstance() {
             if (instance == null) {
                 Client client = new Client(Constants.ALGOLIA_APP_ID, Constants.ALGOLIA_ADD_BOOK_API_KEY);
                 instance = client.getIndex(Constants.ALGOLIA_INDEX_NAME);
@@ -328,10 +318,11 @@ public class Book implements Serializable {
                 this.tags = new ArrayList<>();
             }
 
-            private JSONObject toJSON(@NonNull String bookId) {
+            private JSONObject toJSON(@NonNull String bookId, JSONObject geoloc) {
                 try {
                     JSONObject data = new JSONObject(new GsonBuilder().create().toJson(this));
                     data.put("bookId", bookId);
+                    data.put("_geoloc", geoloc);
                     return data;
                 } catch (JSONException e) {
                     return null;

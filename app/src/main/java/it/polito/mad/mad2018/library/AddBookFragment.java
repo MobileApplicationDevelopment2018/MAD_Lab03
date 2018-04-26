@@ -45,6 +45,7 @@ import it.polito.mad.mad2018.BuildConfig;
 import it.polito.mad.mad2018.R;
 import it.polito.mad.mad2018.barcodereader.BarcodeCaptureActivity;
 import it.polito.mad.mad2018.data.Book;
+import it.polito.mad.mad2018.data.UserProfile;
 import it.polito.mad.mad2018.utils.FileUtilities;
 import it.polito.mad.mad2018.utils.FragmentDialog;
 import it.polito.mad.mad2018.utils.IsbnQuery;
@@ -353,7 +354,7 @@ public class AddBookFragment extends FragmentDialog<AddBookFragment.DialogID>
         openDialog(DialogID.DIALOG_SAVING, true);
 
         OnSuccessListener<Object> onSuccess = v -> {
-            book.saveToFirebase();
+            book.saveToFirebase(UserProfile.localInstance);
             Toast.makeText(getContext(), getResources().getString(R.string.add_book_saved), Toast.LENGTH_LONG).show();
             clearViews(true);
 
@@ -367,7 +368,7 @@ public class AddBookFragment extends FragmentDialog<AddBookFragment.DialogID>
                     Toast.LENGTH_LONG).show();
         };
 
-        book.saveToAlgolia((obj, e) -> {
+        book.saveToAlgolia(UserProfile.localInstance, (obj, e) -> {
             if (e != null) {
                 onFailure.onFailure(e);
                 return;
