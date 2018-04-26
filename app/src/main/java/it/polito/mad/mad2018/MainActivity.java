@@ -234,7 +234,7 @@ public class MainActivity extends AppCompatActivityDialog<MainActivity.DialogID>
                     replaceFragment(ShowProfileFragment.newInstance(localProfile));
                     DrawerLayout drawerLayout = findViewById(R.id.drawer_layout);
                     drawerLayout.closeDrawer(GravityCompat.START);
-                    drawer.getMenu().findItem(R.id.nav_profile);
+                    drawer.getMenu().findItem(R.id.nav_profile).setChecked(true);
                 });
     }
 
