@@ -243,6 +243,8 @@ public class Book implements Serializable {
 
         List<Task<?>> tasks = new ArrayList<>();
 
+        this.data.uid = UserProfile.getCurrentUserId();
+
         tasks.add(FirebaseDatabase.getInstance().getReference()
                 .child(FIREBASE_BOOKS_KEY)
                 .child(bookId)
