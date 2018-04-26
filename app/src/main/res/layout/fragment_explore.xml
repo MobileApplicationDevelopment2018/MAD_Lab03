@@ -1,75 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:algolia="http://schemas.android.com/apk/res-auto"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/fragment_explore_layout"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
-    tools:context="it.polito.mad.mad2018.ExploreFragment"
-    >
+    tools:context="it.polito.mad.mad2018.ExploreFragment">
 
-    <LinearLayout
+    <com.algolia.instantsearch.ui.views.Hits
+        android:id="@+id/algolia_hits"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:orientation="vertical"
-        >
+        android:layout_height="wrap_content"
+        algolia:itemLayout="@layout/book_search_item" />
 
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:background="?attr/colorPrimary"
-            android:orientation="vertical"
-            android:padding="@dimen/activity_horizontal_margin">
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:gravity="center_vertical">
-                <com.algolia.instantsearch.ui.views.SearchBox
-                    android:id="@+id/searchBox"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:background="@color/cardview_light_background"
-                    app:popupTheme="@style/AppTheme.PopupOverlay"
-                    android:layout_weight="1"
-                    />
-                <ImageView
-                    android:id="@+id/show_search_options"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:src="@drawable/ic_add_white_24dp"
-                    android:focusable="true"
-                    android:clickable="true"/>
-            </LinearLayout>
-            <RelativeLayout
-                android:id="@+id/search_filters_bar"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:paddingTop="4dp"
-                android:visibility="gone">
-                <com.algolia.instantsearch.ui.views.filters.NumericSelector
-                    android:id="@+id/numeric_selector"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:spinnerMode="dropdown"
-                    algolia:attribute="condition"
-                    algolia:labels="@string/book_conditions_list"
-                    algolia:defaultLabel="@string/book_condition_any"
-                    algolia:operator="ge"
-                    algolia:values="0, 1, 2, 3"
-                    algolia:autoHide="true"/>
-            </RelativeLayout>
-        </LinearLayout>
-
-        <com.algolia.instantsearch.ui.views.Hits
-            android:id="@+id/algolia_hits"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            algolia:itemLayout="@layout/book_search_item"
-        />
-
-    </LinearLayout>
 </FrameLayout>

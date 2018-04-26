@@ -3,6 +3,7 @@ package it.polito.mad.mad2018;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.support.design.widget.AppBarLayout;
 import android.support.v4.app.Fragment;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -10,6 +11,7 @@ import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 import android.widget.SearchView;
 
@@ -26,6 +28,8 @@ public class ExploreFragment extends Fragment {
 
     private Searcher searcher;
     private InstantSearch helper;
+    private AppBarLayout appBarLayout;
+    private LinearLayout searchViewLayout;
 
     public ExploreFragment() {
         // Required empty public constructor
@@ -51,10 +55,15 @@ public class ExploreFragment extends Fragment {
                              Bundle savedInstanceState) {
         setHasOptionsMenu(true);
         View view = inflater.inflate(R.layout.fragment_explore, container, false);
-        RelativeLayout filters = view.findViewById(R.id.search_filters_bar);
-        view.findViewById(R.id.show_search_options)
-                .setOnClickListener(v -> filters.setVisibility(filters.getVisibility() == View.GONE ? View.VISIBLE : View.GONE));
+        searchViewLayout = (LinearLayout) inflater.inflate(R.layout.search_view_layout, null);
         return view;
+    }
+
+    @Override
+    public void onActivityCreated(@Nullable Bundle savedInstanceState) {
+        super.onActivityCreated(savedInstanceState);
+        appBarLayout = getActivity().findViewById(R.id.app_bar_layout);
+        appBarLayout.addView(searchViewLayout);
     }
 
     @Override
@@ -68,23 +77,31 @@ public class ExploreFragment extends Fragment {
     @Override
     public void onStart() {
         super.onStart();
+        RelativeLayout filters = searchViewLayout.findViewById(R.id.search_filters_bar);
+        searchViewLayout.findViewById(R.id.show_search_options)
+                .setOnClickListener(v -> filters.setVisibility(filters.getVisibility() == View.GONE ? View.VISIBLE : View.GONE));
+
         searcher = Searcher.create(Constants.ALGOLIA_APP_ID, Constants.ALGOLIA_SEARCH_API_KEY,
                 Constants.ALGOLIA_INDEX_NAME);
         helper = new InstantSearch(this.getActivity(), searcher);
-        NumericSelector numericSelector = getView().findViewById(R.id.numeric_selector);
-        numericSelector.initWithSearcher(searcher);
-    }
-
-    @Override
-    public void onResume() {
-        super.onResume();
+        //NumericSelector numericSelector = getView().findViewById(R.id.numeric_selector);
+        //numericSelector.initWithSearcher(searcher);
         helper.search();
+
     }
 
     @Override
     public void onStop() {
         super.onStop();
         searcher.destroy();
+    }
+
+    @Override
+    public void onDetach() {
+        if (appBarLayout != null) {
+            appBarLayout.removeView(searchViewLayout);
+        }
+        super.onDetach();
     }
 
     @Override

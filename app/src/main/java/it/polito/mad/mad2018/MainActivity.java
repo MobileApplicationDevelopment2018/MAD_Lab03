@@ -115,7 +115,6 @@ public class MainActivity extends AppCompatActivityDialog<MainActivity.DialogID>
 
         int id = item.getItemId();
 
-
         switch (id) {
             case R.id.nav_explore:
                 this.replaceFragment(ExploreFragment.newInstance());
