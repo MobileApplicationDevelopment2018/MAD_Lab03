@@ -16,10 +16,13 @@
     </style>
 
     <style name="InputLabel" parent="TextAppearance.AppCompat.Caption">
-        <item name="android:paddingBottom">@dimen/input_label_vertical_spacing</item>
         <item name="android:paddingLeft">@dimen/input_label_horizontal_spacing</item>
         <item name="android:paddingRight">@dimen/input_label_horizontal_spacing</item>
         <item name="android:textColor">?android:textColorHint</item>
+    </style>
+
+    <style name="Button.Important" parent="ThemeOverlay.AppCompat">
+        <item name="colorAccent">@color/colorRed</item>
     </style>
 
 </resources>

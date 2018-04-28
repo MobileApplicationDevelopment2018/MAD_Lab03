@@ -8,6 +8,7 @@
     <color name="colorTextAccent">@color/light_green_500</color>
     <color name="colorIcon">@android:color/white</color>
     <color name="colorGrey">@android:color/darker_gray</color>
+    <color name="colorRed">@android:color/holo_red_light</color>
 
     <!-- LIGHT GREEN palette -->
     <color name="light_green_100">#DCEDC8</color>

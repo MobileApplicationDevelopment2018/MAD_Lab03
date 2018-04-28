@@ -64,7 +64,6 @@ public class AddBookFragment extends FragmentDialog<AddBookFragment.DialogID>
     private static final int PERMISSIONS_REQUEST_CAMERA = 5;
     private static final int RC_BARCODE_CAPTURE = 9001;
 
-    private static final String BOOK_KEY = "book";
     private static final String TO_BE_DELETED_KEY = "to_be_deleted";
 
     private static final String IMAGE_PATH_TMP = "book_picture_tmp";
@@ -82,6 +81,8 @@ public class AddBookFragment extends FragmentDialog<AddBookFragment.DialogID>
     private Locale currentLocale;
 
     private OnBookAddedListener onBookAddedListener;
+
+    public AddBookFragment() { /* Required empty public constructor */ }
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -145,7 +146,7 @@ public class AddBookFragment extends FragmentDialog<AddBookFragment.DialogID>
         book = null;
         fileToBeDeleted = false;
         if (savedInstanceState != null) {
-            book = (Book) savedInstanceState.getSerializable(BOOK_KEY);
+            book = (Book) savedInstanceState.getSerializable(Book.BOOK_KEY);
             fileToBeDeleted = savedInstanceState.getBoolean(TO_BE_DELETED_KEY, false);
         }
 
@@ -205,7 +206,7 @@ public class AddBookFragment extends FragmentDialog<AddBookFragment.DialogID>
     public void onSaveInstanceState(@NonNull Bundle outState) {
         super.onSaveInstanceState(outState);
 
-        outState.putSerializable(BOOK_KEY, book);
+        outState.putSerializable(Book.BOOK_KEY, book);
         outState.putBoolean(TO_BE_DELETED_KEY, fileToBeDeleted);
     }
 

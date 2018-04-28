@@ -41,6 +41,12 @@ import it.polito.mad.mad2018.utils.PictureUtilities;
 import it.polito.mad.mad2018.utils.Utilities;
 
 public class Book implements Serializable {
+
+    public static final String BOOK_KEY = "book_key";
+    public static final String BOOK_ID_KEY = "book_id_key";
+    public static final String ALGOLIA_BOOK_ID_KEY = "objectID";
+    public static final String ALGOLIA_GEOLOC_KEY = "_geoloc";
+
     public static final int INITIAL_YEAR = 1900;
     public static final int BOOK_PICTURE_SIZE = 1024;
     public static final int BOOK_PICTURE_QUALITY = 50;
@@ -53,7 +59,6 @@ public class Book implements Serializable {
 
     private final String bookId;
     private final Book.Data data;
-    private UserProfile owner;
 
     public Book(@NonNull String bookId, @NonNull Data data) {
         this.bookId = bookId;
@@ -216,19 +221,11 @@ public class Book implements Serializable {
     }
 
     public List<String> getTags() {
-        return this.data.bookInfo.tags;
+        return new ArrayList<>(this.data.bookInfo.tags);
     }
 
     public String getOwnerID() {
         return this.data.uid;
-    }
-
-    public UserProfile getOwner() {
-        return owner;
-    }
-
-    public void setOwner(UserProfile owner) {
-        this.owner = owner;
     }
 
     public StorageReference getBookPictureReference() {
@@ -269,7 +266,7 @@ public class Book implements Serializable {
 
     public void saveToAlgolia(@NonNull UserProfile owner, @NonNull CompletionHandler completionHandler) {
 
-        JSONObject object = this.data.bookInfo.toJSON(this.bookId, owner.getLocationAlgolia());
+        JSONObject object = this.data.bookInfo.toJSON(owner.getLocationAlgolia());
         if (object != null) {
             AlgoliaBookIndex.getInstance()
                     .addObjectAsync(object, bookId, completionHandler);
@@ -320,11 +317,10 @@ public class Book implements Serializable {
                 this.tags = new ArrayList<>();
             }
 
-            private JSONObject toJSON(@NonNull String bookId, JSONObject geoloc) {
+            private JSONObject toJSON(@NonNull JSONObject geoloc) {
                 try {
                     JSONObject data = new JSONObject(new GsonBuilder().create().toJson(this));
-                    data.put("bookId", bookId);
-                    data.put("_geoloc", geoloc);
+                    data.put(ALGOLIA_GEOLOC_KEY, geoloc);
                     return data;
                 } catch (JSONException e) {
                     return null;

@@ -34,7 +34,7 @@ public class BookImageView extends AppCompatImageView implements AlgoliaHitView 
 
         StorageReference reference = null;
         try {
-            String bookId = result.getString("bookId");
+            String bookId = result.getString(Book.ALGOLIA_BOOK_ID_KEY);
             if (bookId != null) {
                 reference = Book.getBookThumbnailReference(bookId);
             }

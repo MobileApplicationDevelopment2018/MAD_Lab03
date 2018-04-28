@@ -1,11 +1,11 @@
 package it.polito.mad.mad2018;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.design.widget.AppBarLayout;
 import android.support.v4.app.Fragment;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -13,15 +13,15 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
-import android.widget.SearchView;
+import android.widget.Toast;
 
 import com.algolia.instantsearch.helpers.InstantSearch;
 import com.algolia.instantsearch.helpers.Searcher;
-import com.algolia.instantsearch.ui.views.SearchBox;
-import com.algolia.instantsearch.ui.views.filters.NumericSelector;
+import com.algolia.instantsearch.ui.views.Hits;
 
-import org.greenrobot.eventbus.EventBus;
+import org.json.JSONException;
 
+import it.polito.mad.mad2018.data.Book;
 import it.polito.mad.mad2018.data.Constants;
 
 public class ExploreFragment extends Fragment {
@@ -54,24 +54,24 @@ public class ExploreFragment extends Fragment {
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         setHasOptionsMenu(true);
+
         View view = inflater.inflate(R.layout.fragment_explore, container, false);
         searchViewLayout = (LinearLayout) inflater.inflate(R.layout.search_view_layout, null);
+
+        setHitsOnClickListener(view);
+
         return view;
     }
 
     @Override
     public void onActivityCreated(@Nullable Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
-        appBarLayout = getActivity().findViewById(R.id.app_bar_layout);
-        appBarLayout.addView(searchViewLayout);
-    }
-
-    @Override
-    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
-        super.onViewCreated(view, savedInstanceState);
 
         assert getActivity() != null;
         getActivity().setTitle(R.string.explore);
+
+        appBarLayout = getActivity().findViewById(R.id.app_bar_layout);
+        appBarLayout.addView(searchViewLayout);
     }
 
     @Override
@@ -111,5 +111,24 @@ public class ExploreFragment extends Fragment {
         super.onCreateOptionsMenu(menu, inflater);
         //helper.registerSearchView(this.getActivity(), menu, R.id.explore_search);
         //helper.registerWidget(getView().findViewById(R.id.algolia_hits));
+    }
+
+    private void setHitsOnClickListener(View view) {
+
+        final Hits hits = view.findViewById(R.id.algolia_hits);
+        hits.setOnItemClickListener((recyclerView, position, v) -> {
+
+            try {
+                String bookId = hits.get(position).getString(Book.ALGOLIA_BOOK_ID_KEY);
+                if (bookId != null) {
+                    Intent toBookInfo = new Intent(getActivity(), BookInfoActivity.class);
+                    toBookInfo.putExtra(Book.BOOK_ID_KEY, bookId);
+                    startActivity(toBookInfo);
+                    return;
+                }
+            } catch (JSONException e) { /* Do nothing */ }
+
+            Toast.makeText(getContext(), R.string.error_show_book_info, Toast.LENGTH_LONG).show();
+        });
     }
 }

@@ -77,7 +77,7 @@ public class UserProfile implements Serializable {
         this.localImagePath = null;
     }
 
-    public UserProfile(@NonNull FirebaseUser user, @NonNull Resources resources) {
+    public UserProfile(@NonNull FirebaseUser user) {
         this.uid = user.getUid();
         this.data = new Data();
         this.localImageToBeDeleted = false;
@@ -144,6 +144,10 @@ public class UserProfile implements Serializable {
                 .child(FIREBASE_DATA_KEY)
                 .child(FIREBASE_BOOKS_KEY)
                 .child(FIREBASE_OWNED_BOOKS_KEY);
+    }
+
+    public static boolean isLocal(String uid) {
+        return Utilities.equals(uid, UserProfile.getCurrentUserId());
     }
 
     public void setProfilePicture(String path, boolean toBeDeleted) {
@@ -273,9 +277,7 @@ public class UserProfile implements Serializable {
     }
 
     public boolean isLocal() {
-        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
-        return user == null || user.getUid().equals(this.uid);
-
+        return UserProfile.isLocal(this.uid);
     }
 
     public Task<Void> saveToFirebase(@NonNull Resources resources) {
@@ -319,8 +321,8 @@ public class UserProfile implements Serializable {
         for (String bookId : this.data.books.ownedBooks.keySet()) {
             try {
                 bookUpdates.add(new JSONObject()
-                        .put("_geoloc", geoloc)
-                        .put("objectID", bookId));
+                        .put(Book.ALGOLIA_GEOLOC_KEY, geoloc)
+                        .put(Book.ALGOLIA_BOOK_ID_KEY, bookId));
             } catch (JSONException e) { /* Do nothing */ }
         }
 

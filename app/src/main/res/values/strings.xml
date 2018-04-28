@@ -128,5 +128,10 @@
     <string name="book_condition_any">Any condition</string>
     <string name="no_books">No books yet</string>
     <string name="my_books">My books</string>
+    <string name="unknown">Unknown</string>
+    <string name="no_tags_found">No tags found</string>
+    <string name="book_picture">Book picture</string>
+    <string name="delete">Delete</string>
+    <string name="error_show_book_info">An error occurred</string>
 
 </resources>

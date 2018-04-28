@@ -1,45 +1,47 @@
 package it.polito.mad.mad2018;
 
 import android.os.Bundle;
+import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
-import android.support.v4.app.FragmentTransaction;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.ImageView;
+import android.widget.ProgressBar;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.ValueEventListener;
-import com.google.firebase.storage.StorageReference;
+
+import java.util.List;
 
 import it.polito.mad.mad2018.data.Book;
 import it.polito.mad.mad2018.data.UserProfile;
 import it.polito.mad.mad2018.utils.GlideApp;
+import it.polito.mad.mad2018.utils.Utilities;
 import me.gujun.android.taggroup.TagGroup;
 
 public class BookInfoFragment extends Fragment {
+
+    public final static String BOOK_DELETABLE_KEY = "book_deletable_key";
+
     private Book book;
+    private UserProfile owner;
+
     private ValueEventListener profileListener;
-    private TextView title, authors, publisher, editionYear, language, conditions, bookOwner;
-    ;
-    private TagGroup tagGroup;
-    private ImageView bookPicture;
-    private Button ownerProfileBtn;
-    private UserProfile user;
-    private View view;
 
     public BookInfoFragment() { /* Required empty public constructor */ }
 
-    public static BookInfoFragment newInstance(Book book) {
+    public static BookInfoFragment newInstance(Book book, boolean deletable) {
         BookInfoFragment fragment = new BookInfoFragment();
         Bundle args = new Bundle();
-        args.putSerializable(BookInfoActivity.BOOK_KEY, book);
+        args.putSerializable(Book.BOOK_KEY, book);
+        args.putBoolean(BOOK_DELETABLE_KEY, deletable);
         fragment.setArguments(args);
         return fragment;
     }
@@ -47,33 +49,37 @@ public class BookInfoFragment extends Fragment {
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setRetainInstance(true);
     }
 
 
     @Nullable
     @Override
-    public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, Bundle savedInstanceState) {
-        setHasOptionsMenu(true);
+    public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container,
+                             Bundle savedInstanceState) {
 
-        book = (Book) getArguments().getSerializable(BookInfoActivity.BOOK_KEY);
+        assert getActivity() != null;
         getActivity().setTitle(R.string.book_details);
+
+        assert getArguments() != null;
+        book = (Book) getArguments().getSerializable(Book.BOOK_KEY);
+        boolean deletable = getArguments().getBoolean(BOOK_DELETABLE_KEY);
         assert book != null;
 
-        view = inflater.inflate(R.layout.fragment_book_info, container, false);
+        if (savedInstanceState != null) {
+            owner = (UserProfile) savedInstanceState.getSerializable(UserProfile.PROFILE_INFO_KEY);
+        }
 
-        title = view.findViewById(R.id.fbi_book_title);
-        authors = view.findViewById(R.id.fbi_book_authors);
-        publisher = view.findViewById(R.id.fbi_book_publisher);
-        editionYear = view.findViewById(R.id.fbi_book_edition_year);
-        language = view.findViewById(R.id.fbi_book_language);
-        conditions = view.findViewById(R.id.fbi_book_conditions);
-        bookPicture = view.findViewById(R.id.fbi_book_picture);
-        tagGroup = view.findViewById(R.id.fbi_book_tags);
-        bookOwner = view.findViewById(R.id.fbi_book_owner);
-        ownerProfileBtn = view.findViewById(R.id.fbi_show_profile_button);
+        View view = inflater.inflate(R.layout.fragment_book_info, container, false);
 
-        fillViews();
+        boolean ownedBook = UserProfile.isLocal(book.getOwnerID());
+        fillViewsBook(view);
+        if (ownedBook && !deletable) {
+            view.findViewById(R.id.fbi_extra).setVisibility(View.GONE);
+            view.findViewById(R.id.fbi_line_extra).setVisibility(View.GONE);
+        } else {
+            fillViewsOwner(view, ownedBook);
+            fillViewsDelete(view, deletable && ownedBook);
+        }
 
         return view;
     }
@@ -90,37 +96,91 @@ public class BookInfoFragment extends Fragment {
         unsetOnProfileLoadedListener();
     }
 
-    private void fillViews() {
+    @Override
+    public void onSaveInstanceState(@NonNull Bundle outState) {
+        super.onSaveInstanceState(outState);
+        outState.putSerializable(UserProfile.PROFILE_INFO_KEY, owner);
+    }
+
+    private void fillViewsBook(View view) {
+        String unknown = getString(R.string.unknown);
+
+        TextView title = view.findViewById(R.id.fbi_book_title);
+        TextView authors = view.findViewById(R.id.fbi_book_authors);
+        TextView publisher = view.findViewById(R.id.fbi_book_publisher);
+        TextView editionYear = view.findViewById(R.id.fbi_book_edition_year);
+        TextView language = view.findViewById(R.id.fbi_book_language);
+        TextView conditions = view.findViewById(R.id.fbi_book_conditions);
+
+        ImageView bookPicture = view.findViewById(R.id.fbi_book_picture);
+        TagGroup tagGroup = view.findViewById(R.id.fbi_book_tags);
+
         title.setText(book.getTitle());
         authors.setText(book.getAuthors(","));
-        publisher.setText(book.getPublisher());
+        publisher.setText(Utilities.isNullOrWhitespace(book.getPublisher()) ? unknown : book.getPublisher());
         editionYear.setText(String.valueOf(book.getYear()));
-        language.setText(book.getLanguage());
+        language.setText(Utilities.isNullOrWhitespace(book.getLanguage()) ? unknown : book.getLanguage());
         conditions.setText(book.getConditions());
-        tagGroup.setTags(book.getTags());
 
-        StorageReference reference = Book.getBookThumbnailReference(book.getBookId());
+        List<String> tags = book.getTags();
+        if (tags.size() == 0) {
+            tags.add(getString(R.string.no_tags_found));
+        }
+        tagGroup.setTags(tags);
 
         GlideApp.with(view.getContext())
-                .load(reference)
+                .load(Book.getBookThumbnailReference(book.getBookId()))
                 .placeholder(R.drawable.ic_default_book_preview)
                 .transition(DrawableTransitionOptions.withCrossFade())
                 .centerCrop()
                 .into(bookPicture);
+    }
 
-        ownerProfileBtn.setOnClickListener(v -> {
-            if (bookOwner.getText() == null)
-                return;
+    private void fillViewsOwner(View view, boolean ownedBook) {
+        View ownerView = view.findViewById(R.id.fbi_layout_owner);
+        ownerView.setVisibility(ownedBook ? View.GONE : View.VISIBLE);
 
-            final FragmentTransaction ft = getFragmentManager().beginTransaction();
-            ft.replace(R.id.bi_main_fragment, ShowProfileFragment.newInstance(user), "");
-            ft.addToBackStack(null); // To allow to come back to the previous fragment when back is pressed
-            ft.commit();
+        if (ownedBook) {
+            return;
+        }
+
+        TextView ownerNameTextView = view.findViewById(R.id.fbi_book_owner);
+        ProgressBar progressBarLoading = view.findViewById(R.id.fbi_loading_owner);
+        Button ownerProfileButton = view.findViewById(R.id.fbi_show_profile_button);
+
+        progressBarLoading.setVisibility(owner == null ? View.VISIBLE : View.GONE);
+        ownerNameTextView.setVisibility(owner == null ? View.GONE : View.VISIBLE);
+        ownerProfileButton.setEnabled(owner != null);
+
+        if (owner != null) {
+            ownerNameTextView.setText(owner.getUsername());
+        }
+
+        ownerProfileButton.setOnClickListener(v -> {
+            assert getFragmentManager() != null;
+            getFragmentManager().beginTransaction()
+                    .replace(R.id.bi_main_fragment, ShowProfileFragment.newInstance(owner, false))
+                    .addToBackStack(null) // To allow to come back to the previous fragment when back is pressed
+                    .commit();
+        });
+    }
+
+    private void fillViewsDelete(View view, boolean deletable) {
+        Button deleteButton = view.findViewById(R.id.fbi_delete_button);
+        deleteButton.setVisibility(deletable ? View.VISIBLE : View.GONE);
+
+        if (!deletable) {
+            return;
+        }
+
+        deleteButton.setOnClickListener(v -> {
+            Toast.makeText(getContext(), "Delete button clicked", Toast.LENGTH_LONG).show();
         });
     }
 
     private void setOnProfileLoadedListener() {
-        if (book.getOwnerID() == null)
+        boolean ownedBook = UserProfile.isLocal(book.getOwnerID());
+        if (owner != null || ownedBook)
             return;
 
         this.profileListener = UserProfile.setOnProfileLoadedListener(
@@ -133,19 +193,16 @@ public class BookInfoFragment extends Fragment {
                         }
 
                         UserProfile.Data data = dataSnapshot.getValue(UserProfile.Data.class);
-                        if (data == null) {
-                        } else {
-                            user = new UserProfile(data, getResources());
-                            updateOwnerId(user.getUsername());
-                            Log.d("User Owner", user.getUsername());
+                        if (data != null) {
+                            owner = new UserProfile(book.getOwnerID(), data, getResources());
+                            assert getView() != null;
+                            fillViewsOwner(getView(), false);
                         }
                     }
 
                     @Override
                     public void onCancelled(DatabaseError databaseError) {
-                        if (!unsetOnProfileLoadedListener()) {
-                            return;
-                        }
+                        unsetOnProfileLoadedListener();
                     }
                 });
     }
@@ -158,9 +215,4 @@ public class BookInfoFragment extends Fragment {
         }
         return false;
     }
-
-    private void updateOwnerId(String owner) {
-        bookOwner.setText(owner);
-    }
-
 }

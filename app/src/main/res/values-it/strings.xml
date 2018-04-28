@@ -110,4 +110,9 @@
     <string name="hint_owner">Proprietario</string>
     <string name="no_books">Nessun libro</string>
     <string name="my_books">I miei libri</string>
+    <string name="unknown">Sconosciuto</string>
+    <string name="no_tags_found">Nessun tag trovato</string>
+    <string name="book_picture">Immagine del libro</string>
+    <string name="delete">Elimina</string>
+    <string name="error_show_book_info">Si è verificato un errore</string>
 </resources>

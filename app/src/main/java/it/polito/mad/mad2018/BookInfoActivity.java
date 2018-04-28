@@ -1,15 +1,24 @@
 package it.polito.mad.mad2018;
 
 import android.os.Bundle;
-import android.support.v4.app.FragmentTransaction;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.view.View;
+import android.widget.Toast;
+
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.ValueEventListener;
 
 import it.polito.mad.mad2018.data.Book;
 
 public class BookInfoActivity extends AppCompatActivity {
-    public static final String BOOK_KEY = "book_key";
+
     private Book book;
+    private String bookId;
+    private boolean bookDeletable;
+
+    private ValueEventListener bookListener;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -25,25 +34,95 @@ public class BookInfoActivity extends AppCompatActivity {
         }
 
         if (savedInstanceState != null) {
-            this.book = (Book) savedInstanceState.getSerializable(BOOK_KEY);
+            this.book = (Book) savedInstanceState.getSerializable(Book.BOOK_KEY);
+            this.bookId = savedInstanceState.getString(Book.BOOK_ID_KEY);
+            this.bookDeletable = savedInstanceState.getBoolean(BookInfoFragment.BOOK_DELETABLE_KEY, false);
         } else {
-            this.book = (Book) this.getIntent().getSerializableExtra(BOOK_KEY);
+            this.book = (Book) this.getIntent().getSerializableExtra(Book.BOOK_KEY);
+            this.bookId = book == null ? this.getIntent().getStringExtra(Book.BOOK_ID_KEY) : book.getBookId();
+            this.bookDeletable = this.getIntent().getBooleanExtra(BookInfoFragment.BOOK_DELETABLE_KEY, false);
         }
 
-        final FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
-        ft.replace(R.id.bi_main_fragment, BookInfoFragment.newInstance(book), "bi_main_fragment");
-        ft.commit();
+        if (book != null) {
+            showBookInfoFragment();
+        } else {
+            setOnBookLoadedListener();
+        }
     }
 
     @Override
     public void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
-        outState.putSerializable(BOOK_KEY, book);
+        outState.putSerializable(Book.BOOK_KEY, book);
+        outState.putSerializable(Book.BOOK_ID_KEY, bookId);
+        outState.putBoolean(BookInfoFragment.BOOK_DELETABLE_KEY, bookDeletable);
     }
 
     @Override
     public boolean onSupportNavigateUp() {
-        onBackPressed();
+        finish();
         return true;
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+
+        if (book == null) {
+            setOnBookLoadedListener();
+        }
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        unsetOnBookLoadedListener();
+    }
+
+    private void showBookInfoFragment() {
+        findViewById(R.id.bi_loading).setVisibility(View.GONE);
+        getSupportFragmentManager().beginTransaction()
+                .replace(R.id.bi_main_fragment, BookInfoFragment.newInstance(book, bookDeletable))
+                .commit();
+    }
+
+    private void setOnBookLoadedListener() {
+
+        findViewById(R.id.bi_loading).setVisibility(View.VISIBLE);
+        this.bookListener = Book.setOnBookLoadedListener(bookId, new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                if (!unsetOnBookLoadedListener()) {
+                    return;
+                }
+
+                Book.Data data = dataSnapshot.getValue(Book.Data.class);
+                if (data != null) {
+                    book = new Book(bookId, data);
+                    showBookInfoFragment();
+                } else {
+                    Toast.makeText(BookInfoActivity.this,
+                            R.string.error_show_book_info, Toast.LENGTH_LONG).show();
+                    finish();
+                }
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+                unsetOnBookLoadedListener();
+                Toast.makeText(BookInfoActivity.this,
+                        R.string.error_show_book_info, Toast.LENGTH_LONG).show();
+                finish();
+            }
+        });
+    }
+
+    private boolean unsetOnBookLoadedListener() {
+        if (this.bookListener != null) {
+            Book.unsetOnBookLoadedListener(bookId, this.bookListener);
+            this.bookListener = null;
+            return true;
+        }
+        return false;
     }
 }

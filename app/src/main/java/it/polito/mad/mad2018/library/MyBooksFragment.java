@@ -16,6 +16,7 @@ import com.firebase.ui.database.FirebaseRecyclerAdapter;
 import com.firebase.ui.database.FirebaseRecyclerOptions;
 
 import it.polito.mad.mad2018.BookInfoActivity;
+import it.polito.mad.mad2018.BookInfoFragment;
 import it.polito.mad.mad2018.R;
 import it.polito.mad.mad2018.data.Book;
 
@@ -50,7 +51,8 @@ public class MyBooksFragment extends Fragment {
         FirebaseRecyclerOptions<Book> options = Book.getBooksLocalUser();
         adapter = new BookAdapter(options, (v, model) -> {
             Intent toBookInfo = new Intent(getActivity(), BookInfoActivity.class);
-            toBookInfo.putExtra(BookInfoActivity.BOOK_KEY, model);
+            toBookInfo.putExtra(Book.BOOK_KEY, model);
+            toBookInfo.putExtra(BookInfoFragment.BOOK_DELETABLE_KEY, true);
             startActivity(toBookInfo);
         }, (count) -> {
             noBooksView.setVisibility(count == 0 ? View.VISIBLE : View.GONE);

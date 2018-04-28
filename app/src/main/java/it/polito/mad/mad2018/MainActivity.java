@@ -125,7 +125,7 @@ public class MainActivity extends AppCompatActivityDialog<MainActivity.DialogID>
                 break;
 
             case R.id.nav_profile:
-                this.replaceFragment(ShowProfileFragment.newInstance(UserProfile.localInstance));
+                this.replaceFragment(ShowProfileFragment.newInstance(UserProfile.localInstance, true));
                 break;
 
             case R.id.nav_sign_out:
@@ -180,7 +180,7 @@ public class MainActivity extends AppCompatActivityDialog<MainActivity.DialogID>
                     UserProfile.localInstance = (UserProfile) data.getSerializableExtra(UserProfile.PROFILE_INFO_KEY);
                     UserProfile.localInstance.postCommit();
                     updateNavigationView(); // Need to update the drawer information
-                    this.replaceFragment(ShowProfileFragment.newInstance(UserProfile.localInstance), true);
+                    this.replaceFragment(ShowProfileFragment.newInstance(UserProfile.localInstance, true), true);
                 }
                 break;
 
@@ -231,7 +231,7 @@ public class MainActivity extends AppCompatActivityDialog<MainActivity.DialogID>
 
         profilePicture
                 .setOnClickListener(v -> {
-                    replaceFragment(ShowProfileFragment.newInstance(localProfile));
+                    replaceFragment(ShowProfileFragment.newInstance(localProfile, true));
                     DrawerLayout drawerLayout = findViewById(R.id.drawer_layout);
                     drawerLayout.closeDrawer(GravityCompat.START);
                     drawer.getMenu().findItem(R.id.nav_profile).setChecked(true);
@@ -313,7 +313,7 @@ public class MainActivity extends AppCompatActivityDialog<MainActivity.DialogID>
     private void completeRegistration() {
 
         assert firebaseAuth.getCurrentUser() != null;
-        UserProfile.localInstance = new UserProfile(firebaseAuth.getCurrentUser(), this.getResources());
+        UserProfile.localInstance = new UserProfile(firebaseAuth.getCurrentUser());
         UserProfile.localInstance.saveToFirebase(this.getResources());
 
         String message = getString(R.string.sign_in_welcome) + " " + UserProfile.localInstance.getUsername();

@@ -28,14 +28,17 @@ import it.polito.mad.mad2018.utils.GlideRequest;
 
 public class ShowProfileFragment extends Fragment {
 
-    public ShowProfileFragment() {
-        // Required empty public constructor
-    }
+    private static final String EDITABLE_KEY = "editable_key";
 
-    public static ShowProfileFragment newInstance(@NonNull UserProfile profile) {
+    private boolean isEditable;
+
+    public ShowProfileFragment() { /* Required empty public constructor */ }
+
+    public static ShowProfileFragment newInstance(@NonNull UserProfile profile, boolean isEditable) {
         ShowProfileFragment fragment = new ShowProfileFragment();
         Bundle args = new Bundle();
         args.putSerializable(UserProfile.PROFILE_INFO_KEY, profile);
+        args.putSerializable(EDITABLE_KEY, isEditable);
         fragment.setArguments(args);
         return fragment;
     }
@@ -56,6 +59,7 @@ public class ShowProfileFragment extends Fragment {
         assert getArguments() != null;
 
         final UserProfile profile = (UserProfile) getArguments().getSerializable(UserProfile.PROFILE_INFO_KEY);
+        isEditable = getArguments().getBoolean(EDITABLE_KEY);
 
         getActivity().setTitle(R.string.show_profile);
 
@@ -89,7 +93,9 @@ public class ShowProfileFragment extends Fragment {
     @Override
     public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
         menu.clear();
-        inflater.inflate(R.menu.menu_show_profile, menu);
+        if (isEditable) {
+            inflater.inflate(R.menu.menu_show_profile, menu);
+        }
         super.onCreateOptionsMenu(menu, inflater);
     }
 
