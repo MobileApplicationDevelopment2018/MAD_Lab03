@@ -159,12 +159,6 @@ public class Book implements Serializable {
                 .build();
     }
 
-    public static DatabaseReference getBookByLocalUser(@NonNull String bookId) {
-        return FirebaseDatabase.getInstance().getReference()
-                .child(FIREBASE_BOOKS_KEY)
-                .child(bookId);
-    }
-
     private static String generateBookId() {
         return FirebaseDatabase.getInstance().getReference()
                 .child(FIREBASE_BOOKS_KEY).push().getKey();
@@ -264,6 +258,19 @@ public class Book implements Serializable {
         return Tasks.whenAllSuccess(tasks);
     }
 
+    public void deleteFromFirebase(@NonNull UserProfile owner) {
+
+        FirebaseDatabase.getInstance().getReference()
+                .child(FIREBASE_BOOKS_KEY)
+                .child(bookId)
+                .removeValue();
+
+        owner.removeBook(this.bookId);
+
+        this.getBookPictureReference().delete();
+        this.getBookThumbnailReference().delete();
+    }
+
     public void saveToAlgolia(@NonNull UserProfile owner, @NonNull CompletionHandler completionHandler) {
 
         JSONObject object = this.data.bookInfo.toJSON(owner.getLocationAlgolia());
@@ -273,12 +280,17 @@ public class Book implements Serializable {
         }
     }
 
+    public void deleteFromAlgolia(@NonNull CompletionHandler completionHandler) {
+        AlgoliaBookIndex.getInstance()
+                .deleteObjectAsync(bookId, completionHandler);
+    }
+
     static class AlgoliaBookIndex {
         private static Index instance = null;
 
         static Index getInstance() {
             if (instance == null) {
-                Client client = new Client(Constants.ALGOLIA_APP_ID, Constants.ALGOLIA_ADD_BOOK_API_KEY);
+                Client client = new Client(Constants.ALGOLIA_APP_ID, Constants.ALGOLIA_ADD_REMOVE_BOOK_API_KEY);
                 instance = client.getIndex(Constants.ALGOLIA_INDEX_NAME);
             }
             return instance;

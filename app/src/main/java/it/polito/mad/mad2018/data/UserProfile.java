@@ -295,17 +295,53 @@ public class UserProfile implements Serializable {
         getProfilePictureReferenceFirebase().delete();
     }
 
+    public AsyncTask<Void, Void, PictureUtilities.CompressedImage> processProfilePictureAsync(
+            @NonNull PictureUtilities.CompressImageAsync.OnCompleteListener onCompleteListener) {
+
+        return new PictureUtilities.CompressImageAsync(
+                localImagePath, PROFILE_PICTURE_SIZE, PROFILE_PICTURE_THUMBNAIL_SIZE,
+                PROFILE_PICTURE_QUALITY, onCompleteListener)
+                .execute();
+    }
+
+    public Task<?> uploadProfilePictureToFirebase(@NonNull ByteArrayOutputStream picture) {
+        StorageMetadata metadata = new StorageMetadata.Builder()
+                .setContentType(PictureUtilities.IMAGE_CONTENT_TYPE_UPLOAD)
+                .build();
+
+        return getProfilePictureReferenceFirebase()
+                .putBytes(picture.toByteArray(), metadata);
+    }
+
+    public void postCommit() {
+        this.localImageToBeDeleted = false;
+        this.localImagePath = null;
+    }
+
     public Task<?> addBook(String bookId) {
         this.data.books.ownedBooks.put(bookId, true);
         return FirebaseDatabase.getInstance().getReference()
-                .child(UserProfile.FIREBASE_USERS_KEY)
+                .child(FIREBASE_USERS_KEY)
                 .child(getCurrentUserId())
-                .child(UserProfile.FIREBASE_DATA_KEY)
-                .child(UserProfile.FIREBASE_BOOKS_KEY)
-                .child(UserProfile.FIREBASE_OWNED_BOOKS_KEY)
+                .child(FIREBASE_DATA_KEY)
+                .child(FIREBASE_BOOKS_KEY)
+                .child(FIREBASE_OWNED_BOOKS_KEY)
                 .child(bookId)
                 .setValue(true);
     }
+
+    public void removeBook(String bookId) {
+        this.data.books.ownedBooks.remove(bookId);
+        FirebaseDatabase.getInstance().getReference()
+                .child(FIREBASE_USERS_KEY)
+                .child(getCurrentUserId())
+                .child(FIREBASE_DATA_KEY)
+                .child(FIREBASE_BOOKS_KEY)
+                .child(FIREBASE_OWNED_BOOKS_KEY)
+                .child(bookId)
+                .removeValue();
+    }
+
 
     public void updateAlgoliaGeoLoc(UserProfile other, @NonNull CompletionHandler completionHandler) {
 
@@ -328,29 +364,6 @@ public class UserProfile implements Serializable {
 
         Book.AlgoliaBookIndex.getInstance()
                 .partialUpdateObjectsAsync(new JSONArray(bookUpdates), completionHandler);
-    }
-
-    public AsyncTask<Void, Void, PictureUtilities.CompressedImage> processProfilePictureAsync(
-            @NonNull PictureUtilities.CompressImageAsync.OnCompleteListener onCompleteListener) {
-
-        return new PictureUtilities.CompressImageAsync(
-                localImagePath, PROFILE_PICTURE_SIZE, PROFILE_PICTURE_THUMBNAIL_SIZE,
-                PROFILE_PICTURE_QUALITY, onCompleteListener)
-                .execute();
-    }
-
-    public Task<?> uploadProfilePictureToFirebase(@NonNull ByteArrayOutputStream picture) {
-        StorageMetadata metadata = new StorageMetadata.Builder()
-                .setContentType(PictureUtilities.IMAGE_CONTENT_TYPE_UPLOAD)
-                .build();
-
-        return getProfilePictureReferenceFirebase()
-                .putBytes(picture.toByteArray(), metadata);
-    }
-
-    public void postCommit() {
-        this.localImageToBeDeleted = false;
-        this.localImagePath = null;
     }
 
     /* Fields need to be public to enable Firebase to access them */
