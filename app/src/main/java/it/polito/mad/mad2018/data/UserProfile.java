@@ -67,6 +67,12 @@ public class UserProfile implements Serializable {
         this.localImageToBeDeleted = false;
         this.localImagePath = null;
         trimFields(resources);
+
+        if (this.data.profile.location.latitude == 0 && this.data.profile.location.longitude == 0) {
+            this.data.profile.location.latitude = 45.116177;
+            this.data.profile.location.longitude = 7.742615;
+            this.data.profile.location.name = Resources.getSystem().getString(R.string.default_city_turin);
+        }
     }
 
     public UserProfile(@NonNull UserProfile other) {
@@ -74,6 +80,12 @@ public class UserProfile implements Serializable {
         this.data = new Data(other.data);
         this.localImageToBeDeleted = false;
         this.localImagePath = null;
+
+        if (this.data.profile.location.latitude == 0 && this.data.profile.location.longitude == 0) {
+            this.data.profile.location.latitude = 45.116177;
+            this.data.profile.location.longitude = 7.742615;
+            this.data.profile.location.name = Resources.getSystem().getString(R.string.default_city_turin);
+        }
     }
 
     public UserProfile(@NonNull FirebaseUser user) {
@@ -94,6 +106,12 @@ public class UserProfile implements Serializable {
         if (this.data.profile.username == null) {
             this.data.profile.username = getUsernameFromEmail(this.data.profile.email);
 
+        }
+
+        if (this.data.profile.location.latitude == 0 && this.data.profile.location.longitude == 0) {
+            this.data.profile.location.latitude = 45.116177;
+            this.data.profile.location.longitude = 7.742615;
+            this.data.profile.location.name = Resources.getSystem().getString(R.string.default_city_turin);
         }
     }
 

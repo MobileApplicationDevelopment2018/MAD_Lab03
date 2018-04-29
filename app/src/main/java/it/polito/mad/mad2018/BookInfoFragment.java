@@ -2,10 +2,13 @@ package it.polito.mad.mad2018;
 
 import android.app.AlertDialog;
 import android.app.Dialog;
+import android.content.Intent;
 import android.graphics.drawable.Drawable;
+import android.net.Uri;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.support.v7.widget.AppCompatImageButton;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -175,6 +178,8 @@ public class BookInfoFragment extends FragmentDialog<BookInfoFragment.DialogID>
         TextView ownerNameTextView = view.findViewById(R.id.fbi_book_owner);
         ProgressBar progressBarLoading = view.findViewById(R.id.fbi_loading_owner);
         Button ownerProfileButton = view.findViewById(R.id.fbi_show_profile_button);
+        TagGroup bookLocation = view.findViewById(R.id.fbi_book_location);
+        AppCompatImageButton buttonLocation = view.findViewById(R.id.fbi_locate_icon);
 
         progressBarLoading.setVisibility(owner == null ? View.VISIBLE : View.GONE);
         ownerNameTextView.setVisibility(owner == null ? View.GONE : View.VISIBLE);
@@ -182,6 +187,16 @@ public class BookInfoFragment extends FragmentDialog<BookInfoFragment.DialogID>
 
         if (owner != null) {
             ownerNameTextView.setText(owner.getUsername());
+            bookLocation.setTags(owner.getLocation());
+            buttonLocation.setOnClickListener(v -> {
+                if (owner.getLocation() == null)
+                    return;
+
+                Uri uri = Uri.parse("http://maps.google.co.in/maps?q=" + owner.getLocation());
+                Intent showCity = new Intent(Intent.ACTION_VIEW, uri);
+                if (showCity.resolveActivity(getActivity().getPackageManager()) != null)
+                    startActivity(showCity);
+            });
         }
 
         ownerProfileButton.setOnClickListener(v -> {

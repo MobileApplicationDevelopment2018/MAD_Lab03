@@ -134,5 +134,6 @@
     <string name="delete">Delete</string>
     <string name="error_occurred">An error occurred</string>
     <string name="confirm_delete">Are you sure you want to delete the book?\nThis operation cannot be undone</string>
+    <string name="default_city_turin">Turin</string>
 
 </resources>
