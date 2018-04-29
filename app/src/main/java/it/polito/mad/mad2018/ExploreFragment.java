@@ -11,14 +11,18 @@ import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 import android.widget.Toast;
 
+import com.algolia.instantsearch.events.ErrorEvent;
 import com.algolia.instantsearch.helpers.InstantSearch;
 import com.algolia.instantsearch.helpers.Searcher;
 import com.algolia.instantsearch.ui.views.Hits;
 
+import org.greenrobot.eventbus.EventBus;
+import org.greenrobot.eventbus.Subscribe;
 import org.json.JSONException;
 
 import it.polito.mad.mad2018.data.Book;
@@ -30,6 +34,7 @@ public class ExploreFragment extends Fragment {
     private InstantSearch helper;
     private AppBarLayout appBarLayout;
     private LinearLayout searchViewLayout;
+    private FilterResultsFragment filterResultsFragment;
 
     public ExploreFragment() {
         // Required empty public constructor
@@ -48,6 +53,13 @@ public class ExploreFragment extends Fragment {
         if (getArguments() != null) {
 
         }
+
+        searcher = Searcher.create(Constants.ALGOLIA_APP_ID, Constants.ALGOLIA_SEARCH_API_KEY,
+                Constants.ALGOLIA_INDEX_NAME);
+
+        filterResultsFragment = FilterResultsFragment.get(searcher);
+        filterResultsFragment.addSeekBar("bookConditions.value", "conditions", 10.0, 40.0, 3)
+                .addSeekBar("distance", 0.0, 500000.0, 10000);
     }
 
     @Override
@@ -56,9 +68,12 @@ public class ExploreFragment extends Fragment {
         setHasOptionsMenu(true);
 
         View view = inflater.inflate(R.layout.fragment_explore, container, false);
-        searchViewLayout = (LinearLayout) inflater.inflate(R.layout.search_view_layout, null);
 
+        searchViewLayout = (LinearLayout) inflater.inflate(R.layout.search_view_layout, null);
         setHitsOnClickListener(view);
+
+        ImageView filtersButton = searchViewLayout.findViewById(R.id.show_search_filters);
+        filtersButton.setOnClickListener(v -> filterResultsFragment.show(getChildFragmentManager(), FilterResultsFragment.TAG));
 
         return view;
     }
@@ -77,15 +92,8 @@ public class ExploreFragment extends Fragment {
     @Override
     public void onStart() {
         super.onStart();
-        RelativeLayout filters = searchViewLayout.findViewById(R.id.search_filters_bar);
-        searchViewLayout.findViewById(R.id.show_search_options)
-                .setOnClickListener(v -> filters.setVisibility(filters.getVisibility() == View.GONE ? View.VISIBLE : View.GONE));
 
-        searcher = Searcher.create(Constants.ALGOLIA_APP_ID, Constants.ALGOLIA_SEARCH_API_KEY,
-                Constants.ALGOLIA_INDEX_NAME);
         helper = new InstantSearch(this.getActivity(), searcher);
-        //NumericSelector numericSelector = getView().findViewById(R.id.numeric_selector);
-        //numericSelector.initWithSearcher(searcher);
         helper.search();
 
     }
@@ -105,12 +113,16 @@ public class ExploreFragment extends Fragment {
     }
 
     @Override
+    public void onDestroy() {
+        EventBus.getDefault().unregister(this);
+        super.onDestroy();
+    }
+
+    @Override
     public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
         menu.clear();
         inflater.inflate(R.menu.menu_explore, menu);
         super.onCreateOptionsMenu(menu, inflater);
-        //helper.registerSearchView(this.getActivity(), menu, R.id.explore_search);
-        //helper.registerWidget(getView().findViewById(R.id.algolia_hits));
     }
 
     private void setHitsOnClickListener(View view) {
