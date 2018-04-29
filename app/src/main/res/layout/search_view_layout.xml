@@ -26,10 +26,10 @@
                 android:layout_weight="1"
                 />
             <ImageView
-                android:id="@+id/show_search_options"
+                android:id="@+id/show_search_filters"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:src="@drawable/ic_add_white_24dp"
+                android:src="@drawable/ic_tune_white_24dp"
                 android:focusable="true"
                 android:clickable="true"/>
         </LinearLayout>

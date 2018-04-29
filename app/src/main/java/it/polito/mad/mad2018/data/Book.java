@@ -346,7 +346,7 @@ public class Book implements Serializable {
         }
 
         @StringRes
-        private static int getStringId(@Conditions int value) {
+        public static int getStringId(@Conditions int value) {
             switch (value) {
                 case MINT:
                 default:
