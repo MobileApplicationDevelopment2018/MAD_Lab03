@@ -2,6 +2,7 @@ package it.polito.mad.mad2018;
 
 import android.app.AlertDialog;
 import android.app.Dialog;
+import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
@@ -25,10 +26,16 @@ import it.polito.mad.mad2018.data.Book;
 import it.polito.mad.mad2018.data.UserProfile;
 import it.polito.mad.mad2018.utils.FragmentDialog;
 import it.polito.mad.mad2018.utils.GlideApp;
+import it.polito.mad.mad2018.utils.GlideRequest;
 import it.polito.mad.mad2018.utils.Utilities;
 import me.gujun.android.taggroup.TagGroup;
+import rm.com.longpresspopup.LongPressPopup;
+import rm.com.longpresspopup.LongPressPopupBuilder;
+import rm.com.longpresspopup.PopupInflaterListener;
+import rm.com.longpresspopup.PopupStateListener;
 
-public class BookInfoFragment extends FragmentDialog<BookInfoFragment.DialogID> {
+public class BookInfoFragment extends FragmentDialog<BookInfoFragment.DialogID>
+        implements PopupInflaterListener, PopupStateListener {
 
     public final static String BOOK_DELETABLE_KEY = "book_deletable_key";
 
@@ -36,6 +43,8 @@ public class BookInfoFragment extends FragmentDialog<BookInfoFragment.DialogID> 
     private UserProfile owner;
 
     private ValueEventListener profileListener;
+    private LongPressPopup popup;
+    private ImageView popupImage;
 
     public BookInfoFragment() { /* Required empty public constructor */ }
 
@@ -87,6 +96,16 @@ public class BookInfoFragment extends FragmentDialog<BookInfoFragment.DialogID> 
     }
 
     @Override
+    public void onStop() {
+        super.onStop();
+
+        if (popup != null) {
+            popup.unregister();
+            popup.dismissNow();
+        }
+    }
+
+    @Override
     public void onDestroy() {
         super.onDestroy();
         unsetOnProfileLoadedListener();
@@ -101,6 +120,7 @@ public class BookInfoFragment extends FragmentDialog<BookInfoFragment.DialogID> 
     private void fillViewsBook(View view) {
         String unknown = getString(R.string.unknown);
 
+        TextView isbn = view.findViewById(R.id.fbi_book_isbn);
         TextView title = view.findViewById(R.id.fbi_book_title);
         TextView authors = view.findViewById(R.id.fbi_book_authors);
         TextView publisher = view.findViewById(R.id.fbi_book_publisher);
@@ -108,9 +128,10 @@ public class BookInfoFragment extends FragmentDialog<BookInfoFragment.DialogID> 
         TextView language = view.findViewById(R.id.fbi_book_language);
         TextView conditions = view.findViewById(R.id.fbi_book_conditions);
 
-        ImageView bookPicture = view.findViewById(R.id.fbi_book_picture);
+        ImageView bookThumbnail = view.findViewById(R.id.fbi_book_picture);
         TagGroup tagGroup = view.findViewById(R.id.fbi_book_tags);
 
+        isbn.setText(book.getIsbn());
         title.setText(book.getTitle());
         authors.setText(book.getAuthors(","));
         publisher.setText(Utilities.isNullOrWhitespace(book.getPublisher()) ? unknown : book.getPublisher());
@@ -125,11 +146,22 @@ public class BookInfoFragment extends FragmentDialog<BookInfoFragment.DialogID> 
         tagGroup.setTags(tags);
 
         GlideApp.with(view.getContext())
-                .load(Book.getBookThumbnailReference(book.getBookId()))
+                .load(book.getBookThumbnailReferenceOrNull())
                 .placeholder(R.drawable.ic_default_book_preview)
                 .transition(DrawableTransitionOptions.withCrossFade())
                 .centerCrop()
-                .into(bookPicture);
+                .into(bookThumbnail);
+
+        if (book.hasImage()) {
+            popup = new LongPressPopupBuilder(getContext())
+                    .setTarget(bookThumbnail)
+                    .setPopupView(R.layout.popup_view_image, this)
+                    .setPopupListener(this)
+                    .setAnimationType(LongPressPopup.ANIMATION_TYPE_FROM_CENTER)
+                    .build();
+
+            popup.register();
+        }
     }
 
     private void fillViewsOwner(View view, boolean ownedBook) {
@@ -235,6 +267,32 @@ public class BookInfoFragment extends FragmentDialog<BookInfoFragment.DialogID> 
         if (dialogInstance != null) {
             setDialogInstance(dialogInstance);
         }
+
+    }
+
+    @Override
+    public void onViewInflated(@Nullable String popupTag, View root) {
+        popupImage = root.findViewById(R.id.pvi_image);
+    }
+
+    @Override
+    public void onPopupShow(@Nullable String popupTag) {
+        GlideRequest<Drawable> thumbnail = GlideApp
+                .with(this)
+                .load(book.getBookThumbnailReferenceOrNull())
+                .fitCenter();
+
+        assert getContext() != null;
+        GlideApp.with(getContext())
+                .load(book.getBookPictureReferenceOrNull())
+                .thumbnail(thumbnail)
+                .transition(DrawableTransitionOptions.withCrossFade())
+                .fitCenter()
+                .into(popupImage);
+    }
+
+    @Override
+    public void onPopupDismiss(@Nullable String popupTag) {
 
     }
 

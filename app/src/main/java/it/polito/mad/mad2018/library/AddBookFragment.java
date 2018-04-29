@@ -12,7 +12,6 @@ import android.os.Bundle;
 import android.os.Environment;
 import android.provider.MediaStore;
 import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.content.FileProvider;
 import android.text.Editable;
@@ -20,6 +19,7 @@ import android.text.TextWatcher;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
@@ -74,7 +74,6 @@ public class AddBookFragment extends FragmentDialog<AddBookFragment.DialogID>
     private Spinner yearSpinner, conditionSpinner;
     private Button scanBarcodeBtn, addBookBtn, resetBtn, autocompleteBtn;
     private TagGroup tagGroup, authorEtGroup;
-    private View dummyFocus;
 
     private Book book;
     private boolean fileToBeDeleted;
@@ -154,11 +153,6 @@ public class AddBookFragment extends FragmentDialog<AddBookFragment.DialogID>
     }
 
     @Override
-    public void onActivityCreated(@Nullable Bundle savedInstanceState) {
-        super.onActivityCreated(savedInstanceState);
-    }
-
-    @Override
     public void onAttach(Context context) {
         super.onAttach(context);
 
@@ -192,8 +186,7 @@ public class AddBookFragment extends FragmentDialog<AddBookFragment.DialogID>
             final Volume.VolumeInfo volumeInfo = volumes.getItems().get(0).getVolumeInfo();
             Book book = new Book(isbnEdit.getText().toString(), volumeInfo, currentLocale);
             fillViews(book);
-            tagGroup.clearFocus();
-            dummyFocus.requestFocus();
+            hideSoftKeyboard();
         }
     }
 
@@ -354,6 +347,8 @@ public class AddBookFragment extends FragmentDialog<AddBookFragment.DialogID>
     private void uploadBook(PictureUtilities.CompressedImage picture) {
         openDialog(DialogID.DIALOG_SAVING, true);
 
+        book.setHasImage(picture != null);
+
         OnSuccessListener<Object> onSuccess = v -> {
             book.saveToFirebase(UserProfile.localInstance);
             Toast.makeText(getContext(), getResources().getString(R.string.add_book_saved), Toast.LENGTH_LONG).show();
@@ -376,10 +371,11 @@ public class AddBookFragment extends FragmentDialog<AddBookFragment.DialogID>
             }
 
             if (picture != null) {
-                book.savePictureToFirebase(picture.getPicture(), picture.getThumbnail())
+                book.savePictureToFirebase(UserProfile.localInstance, picture.getPicture(), picture.getThumbnail())
                         .addOnCompleteListener(v -> closeDialog())
                         .addOnSuccessListener(onSuccess)
-                        .addOnFailureListener(onFailure);
+                        .addOnFailureListener(onFailure)
+                        .addOnFailureListener(v -> book.deleteFromAlgolia(null));
             } else {
                 onSuccess.onSuccess(null);
                 this.closeDialog();
@@ -407,8 +403,6 @@ public class AddBookFragment extends FragmentDialog<AddBookFragment.DialogID>
 
         // Tags
         tagGroup = view.findViewById(R.id.tag_group);
-
-        dummyFocus = view.findViewById(R.id.ab_dummy_obtain_focus);
     }
 
     private void fillViews(@NonNull Book book) {
@@ -504,6 +498,18 @@ public class AddBookFragment extends FragmentDialog<AddBookFragment.DialogID>
         Intent galleryIntent = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
         if (galleryIntent.resolveActivity(getActivity().getPackageManager()) != null) {
             startActivityForResult(galleryIntent, GALLERY);
+        }
+    }
+
+    private void hideSoftKeyboard() {
+        assert getActivity() != null;
+        View view = getActivity().getCurrentFocus();
+        if (view != null) {
+            InputMethodManager inputMethodManager =
+                    (InputMethodManager) getActivity().getSystemService(Context.INPUT_METHOD_SERVICE);
+            if (inputMethodManager != null) {
+                inputMethodManager.hideSoftInputFromWindow(view.getWindowToken(), 0);
+            }
         }
     }
 

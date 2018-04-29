@@ -19,15 +19,26 @@ import it.polito.mad.mad2018.BookInfoActivity;
 import it.polito.mad.mad2018.BookInfoFragment;
 import it.polito.mad.mad2018.R;
 import it.polito.mad.mad2018.data.Book;
+import it.polito.mad.mad2018.data.UserProfile;
 
 public class MyBooksFragment extends Fragment {
 
+    private UserProfile profile;
     private FirebaseRecyclerAdapter<Book, BookAdapter.BookHolder> adapter;
+    private BookAdapter.OnItemCountChangedListener onItemCountChangedListener;
 
     public MyBooksFragment() { /* Required empty public constructor */ }
 
     public static MyBooksFragment newInstance() {
-        return new MyBooksFragment();
+        return MyBooksFragment.newInstance(UserProfile.localInstance);
+    }
+
+    public static MyBooksFragment newInstance(@NonNull UserProfile profile) {
+        MyBooksFragment fragment = new MyBooksFragment();
+        Bundle args = new Bundle();
+        args.putSerializable(UserProfile.PROFILE_INFO_KEY, profile);
+        fragment.setArguments(args);
+        return fragment;
     }
 
     @Override
@@ -44,20 +55,26 @@ public class MyBooksFragment extends Fragment {
             startActivity(toAddBook);
         });
 
+        assert getArguments() != null;
+        profile = (UserProfile) getArguments().getSerializable(UserProfile.PROFILE_INFO_KEY);
+        assert profile != null;
+
         View noBooksView = view.findViewById(R.id.fmb_no_books);
         RecyclerView recyclerView = view.findViewById(R.id.fmb_recycler_view);
         recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
 
-        FirebaseRecyclerOptions<Book> options = Book.getBooksLocalUser();
+        onItemCountChangedListener = (count) -> {
+            noBooksView.setVisibility(count == 0 ? View.VISIBLE : View.GONE);
+            recyclerView.setVisibility(count == 0 ? View.GONE : View.VISIBLE);
+        };
+
+        FirebaseRecyclerOptions<Book> options = Book.getBooksByUser(profile.getUserId());
         adapter = new BookAdapter(options, (v, model) -> {
             Intent toBookInfo = new Intent(getActivity(), BookInfoActivity.class);
             toBookInfo.putExtra(Book.BOOK_KEY, model);
             toBookInfo.putExtra(BookInfoFragment.BOOK_DELETABLE_KEY, true);
             startActivity(toBookInfo);
-        }, (count) -> {
-            noBooksView.setVisibility(count == 0 ? View.VISIBLE : View.GONE);
-            recyclerView.setVisibility(count == 0 ? View.GONE : View.VISIBLE);
-        });
+        }, onItemCountChangedListener);
         recyclerView.setAdapter(adapter);
 
         return view;
@@ -65,8 +82,9 @@ public class MyBooksFragment extends Fragment {
 
     @Override
     public void onStart() {
-        adapter.startListening();
         super.onStart();
+        adapter.startListening();
+        onItemCountChangedListener.onCountChangedListener(profile.getOwnedBooksCount());
     }
 
     @Override
