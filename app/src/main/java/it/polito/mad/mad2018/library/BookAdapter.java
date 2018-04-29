@@ -34,7 +34,7 @@ class BookAdapter extends FirebaseRecyclerAdapter<Book, BookAdapter.BookHolder> 
     @Override
     public BookHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         View view = LayoutInflater.from(parent.getContext())
-                .inflate(R.layout.book_search_item, parent, false);
+                .inflate(R.layout.item_book, parent, false);
         return new BookHolder(view, onItemClickListener);
     }
 
@@ -83,7 +83,7 @@ class BookAdapter extends FirebaseRecyclerAdapter<Book, BookAdapter.BookHolder> 
             bookAuthors.setText(model.getAuthors(", "));
 
             GlideApp.with(context)
-                    .load(model.getBookThumbnailReference())
+                    .load(model.getBookThumbnailReferenceOrNull())
                     .placeholder(R.drawable.ic_default_book_preview)
                     .transition(DrawableTransitionOptions.withCrossFade())
                     .centerCrop()

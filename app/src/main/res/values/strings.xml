@@ -132,6 +132,7 @@
     <string name="no_tags_found">No tags found</string>
     <string name="book_picture">Book picture</string>
     <string name="delete">Delete</string>
-    <string name="error_show_book_info">An error occurred</string>
+    <string name="error_occurred">An error occurred</string>
+    <string name="confirm_delete">Are you sure you want to delete the book?\nThis operation cannot be undone</string>
 
 </resources>

@@ -14,13 +14,7 @@ public class BorrowedBooksFragment extends Fragment {
     public BorrowedBooksFragment() { /* Required empty public constructor */ }
 
     public static BorrowedBooksFragment newInstance() {
-        BorrowedBooksFragment fragment = new BorrowedBooksFragment();
-        return fragment;
-    }
-
-    @Override
-    public void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
+        return new BorrowedBooksFragment();
     }
 
     @Override

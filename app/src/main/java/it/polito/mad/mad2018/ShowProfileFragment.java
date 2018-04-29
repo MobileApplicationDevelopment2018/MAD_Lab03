@@ -133,8 +133,8 @@ public class ShowProfileFragment extends Fragment {
         rating.setRating(profile.getRating());
 
         Locale currentLocale = getResources().getConfiguration().locale;
-        lentBooks.setText(String.format(currentLocale, "%d", profile.getLentBooks()));
-        borrowedBooks.setText(String.format(currentLocale, "%d", profile.getBorrowedBooks()));
-        toBeReturnedBooks.setText(String.format(currentLocale, "%d", profile.getToBeReturnedBooks()));
+        lentBooks.setText(String.format(currentLocale, "%d", profile.getLentBooksCount()));
+        borrowedBooks.setText(String.format(currentLocale, "%d", profile.getBorrowedBooksCount()));
+        toBeReturnedBooks.setText(String.format(currentLocale, "%d", profile.getToBeReturnedBooksCount()));
     }
 }

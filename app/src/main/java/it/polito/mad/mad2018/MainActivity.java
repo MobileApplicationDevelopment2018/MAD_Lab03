@@ -106,11 +106,6 @@ public class MainActivity extends AppCompatActivityDialog<MainActivity.DialogID>
     }
 
     @Override
-    public void onSaveInstanceState(Bundle outState) {
-        super.onSaveInstanceState(outState);
-    }
-
-    @Override
     public boolean onNavigationItemSelected(@NonNull MenuItem item) {
 
         int id = item.getItemId();

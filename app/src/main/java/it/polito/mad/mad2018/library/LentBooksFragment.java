@@ -14,13 +14,7 @@ public class LentBooksFragment extends Fragment {
     public LentBooksFragment() { /* Required empty public constructor */ }
 
     public static LentBooksFragment newInstance() {
-        LentBooksFragment fragment = new LentBooksFragment();
-        return fragment;
-    }
-
-    @Override
-    public void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
+        return new LentBooksFragment();
     }
 
     @Override

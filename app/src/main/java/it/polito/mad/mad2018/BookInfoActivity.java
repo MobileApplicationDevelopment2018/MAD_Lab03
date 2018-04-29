@@ -41,12 +41,12 @@ public class BookInfoActivity extends AppCompatActivity {
             this.book = (Book) this.getIntent().getSerializableExtra(Book.BOOK_KEY);
             this.bookId = book == null ? this.getIntent().getStringExtra(Book.BOOK_ID_KEY) : book.getBookId();
             this.bookDeletable = this.getIntent().getBooleanExtra(BookInfoFragment.BOOK_DELETABLE_KEY, false);
-        }
 
-        if (book != null) {
-            showBookInfoFragment();
-        } else {
-            setOnBookLoadedListener();
+            if (book != null) {
+                showBookInfoFragment();
+            } else {
+                setOnBookLoadedListener();
+            }
         }
     }
 
@@ -102,7 +102,7 @@ public class BookInfoActivity extends AppCompatActivity {
                     showBookInfoFragment();
                 } else {
                     Toast.makeText(BookInfoActivity.this,
-                            R.string.error_show_book_info, Toast.LENGTH_LONG).show();
+                            R.string.error_occurred, Toast.LENGTH_LONG).show();
                     finish();
                 }
             }
@@ -111,7 +111,7 @@ public class BookInfoActivity extends AppCompatActivity {
             public void onCancelled(DatabaseError databaseError) {
                 unsetOnBookLoadedListener();
                 Toast.makeText(BookInfoActivity.this,
-                        R.string.error_show_book_info, Toast.LENGTH_LONG).show();
+                        R.string.error_occurred, Toast.LENGTH_LONG).show();
                 finish();
             }
         });

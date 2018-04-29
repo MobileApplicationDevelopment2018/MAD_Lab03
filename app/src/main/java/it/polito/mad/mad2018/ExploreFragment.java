@@ -140,7 +140,7 @@ public class ExploreFragment extends Fragment {
                 }
             } catch (JSONException e) { /* Do nothing */ }
 
-            Toast.makeText(getContext(), R.string.error_show_book_info, Toast.LENGTH_LONG).show();
+            Toast.makeText(getContext(), R.string.error_occurred, Toast.LENGTH_LONG).show();
         });
     }
 }

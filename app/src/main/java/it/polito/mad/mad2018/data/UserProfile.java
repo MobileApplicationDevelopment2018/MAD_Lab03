@@ -39,7 +39,6 @@ public class UserProfile implements Serializable {
     public static final String PROFILE_INFO_KEY = "profile_info_key";
 
     private static final String FIREBASE_USERS_KEY = "users";
-    private static final String FIREBASE_DATA_KEY = "data";
     private static final String FIREBASE_BOOKS_KEY = "books";
     private static final String FIREBASE_OWNED_BOOKS_KEY = "ownedBooks";
 
@@ -119,7 +118,6 @@ public class UserProfile implements Serializable {
         return FirebaseDatabase.getInstance().getReference()
                 .child(FIREBASE_USERS_KEY)
                 .child(userId)
-                .child(FIREBASE_DATA_KEY)
                 .addValueEventListener(listener);
     }
 
@@ -133,17 +131,21 @@ public class UserProfile implements Serializable {
         FirebaseDatabase.getInstance().getReference()
                 .child(FIREBASE_USERS_KEY)
                 .child(userId)
-                .child(FIREBASE_DATA_KEY)
                 .removeEventListener(listener);
     }
 
-    public static DatabaseReference getOwnedBooksReference(@NonNull String userId) {
+    static DatabaseReference getOwnedBooksReference(@NonNull String userId) {
         return FirebaseDatabase.getInstance().getReference()
                 .child(FIREBASE_USERS_KEY)
                 .child(userId)
-                .child(FIREBASE_DATA_KEY)
                 .child(FIREBASE_BOOKS_KEY)
                 .child(FIREBASE_OWNED_BOOKS_KEY);
+    }
+
+    static StorageReference getStorageFolderReference(@NonNull String userId) {
+        return FirebaseStorage.getInstance().getReference()
+                .child(FIREBASE_STORAGE_USERS_FOLDER)
+                .child(userId);
     }
 
     public static boolean isLocal(String uid) {
@@ -176,6 +178,10 @@ public class UserProfile implements Serializable {
     private void trimFields(@NonNull Resources resources) {
         this.data.profile.username = Utilities.trimString(this.data.profile.username, resources.getInteger(R.integer.max_length_username));
         this.data.profile.biography = Utilities.trimString(this.data.profile.biography, resources.getInteger(R.integer.max_length_biography));
+    }
+
+    public String getUserId() {
+        return this.uid;
     }
 
     public String getEmail() {
@@ -233,9 +239,7 @@ public class UserProfile implements Serializable {
     }
 
     private StorageReference getProfilePictureReferenceFirebase() {
-        return FirebaseStorage.getInstance().getReference()
-                .child(FIREBASE_STORAGE_USERS_FOLDER)
-                .child(this.uid)
+        return UserProfile.getStorageFolderReference(this.uid)
                 .child(FIREBASE_STORAGE_IMAGE_NAME);
     }
 
@@ -264,15 +268,19 @@ public class UserProfile implements Serializable {
         return this.data.statistics.rating;
     }
 
-    public int getLentBooks() {
+    public int getOwnedBooksCount() {
+        return this.data.books.ownedBooks.size();
+    }
+
+    public int getLentBooksCount() {
         return this.data.statistics.lentBooks;
     }
 
-    public int getBorrowedBooks() {
+    public int getBorrowedBooksCount() {
         return this.data.statistics.borrowedBooks;
     }
 
-    public int getToBeReturnedBooks() {
+    public int getToBeReturnedBooksCount() {
         return this.data.statistics.toBeReturnedBooks;
     }
 
@@ -286,48 +294,12 @@ public class UserProfile implements Serializable {
         return FirebaseDatabase.getInstance().getReference()
                 .child(FIREBASE_USERS_KEY)
                 .child(this.uid)
-                .child(FIREBASE_DATA_KEY)
                 .child(FIREBASE_PROFILE_KEY)
                 .setValue(this.data.profile);
     }
 
     public void deleteProfilePictureFromFirebase() {
         getProfilePictureReferenceFirebase().delete();
-    }
-
-    public Task<?> addBook(String bookId) {
-        this.data.books.ownedBooks.put(bookId, true);
-        return FirebaseDatabase.getInstance().getReference()
-                .child(UserProfile.FIREBASE_USERS_KEY)
-                .child(getCurrentUserId())
-                .child(UserProfile.FIREBASE_DATA_KEY)
-                .child(UserProfile.FIREBASE_BOOKS_KEY)
-                .child(UserProfile.FIREBASE_OWNED_BOOKS_KEY)
-                .child(bookId)
-                .setValue(true);
-    }
-
-    public void updateAlgoliaGeoLoc(UserProfile other, @NonNull CompletionHandler completionHandler) {
-
-        if ((other != null && Utilities.equals(this.data.profile.location, other.data.profile.location)) ||
-                this.data.books.ownedBooks.size() == 0) {
-            completionHandler.requestCompleted(null, null);
-            return;
-        }
-
-        JSONObject geoloc = this.getLocationAlgolia();
-        List<JSONObject> bookUpdates = new ArrayList<>();
-
-        for (String bookId : this.data.books.ownedBooks.keySet()) {
-            try {
-                bookUpdates.add(new JSONObject()
-                        .put(Book.ALGOLIA_GEOLOC_KEY, geoloc)
-                        .put(Book.ALGOLIA_BOOK_ID_KEY, bookId));
-            } catch (JSONException e) { /* Do nothing */ }
-        }
-
-        Book.AlgoliaBookIndex.getInstance()
-                .partialUpdateObjectsAsync(new JSONArray(bookUpdates), completionHandler);
     }
 
     public AsyncTask<Void, Void, PictureUtilities.CompressedImage> processProfilePictureAsync(
@@ -351,6 +323,52 @@ public class UserProfile implements Serializable {
     public void postCommit() {
         this.localImageToBeDeleted = false;
         this.localImagePath = null;
+    }
+
+    public Task<?> addBook(String bookId) {
+        this.data.books.ownedBooks.put(bookId, true);
+        return FirebaseDatabase.getInstance().getReference()
+                .child(FIREBASE_USERS_KEY)
+                .child(getCurrentUserId())
+                .child(FIREBASE_BOOKS_KEY)
+                .child(FIREBASE_OWNED_BOOKS_KEY)
+                .child(bookId)
+                .setValue(true);
+    }
+
+    public void removeBook(String bookId) {
+        this.data.books.ownedBooks.remove(bookId);
+        FirebaseDatabase.getInstance().getReference()
+                .child(FIREBASE_USERS_KEY)
+                .child(getCurrentUserId())
+                .child(FIREBASE_BOOKS_KEY)
+                .child(FIREBASE_OWNED_BOOKS_KEY)
+                .child(bookId)
+                .removeValue();
+    }
+
+
+    public void updateAlgoliaGeoLoc(UserProfile other, @NonNull CompletionHandler completionHandler) {
+
+        if ((other != null && Utilities.equals(this.data.profile.location, other.data.profile.location)) ||
+                this.data.books.ownedBooks.size() == 0) {
+            completionHandler.requestCompleted(null, null);
+            return;
+        }
+
+        JSONObject geoloc = this.getLocationAlgolia();
+        List<JSONObject> bookUpdates = new ArrayList<>();
+
+        for (String bookId : this.data.books.ownedBooks.keySet()) {
+            try {
+                bookUpdates.add(new JSONObject()
+                        .put(Book.ALGOLIA_GEOLOC_KEY, geoloc)
+                        .put(Book.ALGOLIA_BOOK_ID_KEY, bookId));
+            } catch (JSONException e) { /* Do nothing */ }
+        }
+
+        Book.AlgoliaBookIndex.getInstance()
+                .partialUpdateObjectsAsync(new JSONArray(bookUpdates), completionHandler);
     }
 
     /* Fields need to be public to enable Firebase to access them */
