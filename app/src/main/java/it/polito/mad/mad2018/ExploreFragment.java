@@ -57,7 +57,7 @@ public class ExploreFragment extends Fragment {
         searcher = Searcher.create(Constants.ALGOLIA_APP_ID, Constants.ALGOLIA_SEARCH_API_KEY,
                 Constants.ALGOLIA_INDEX_NAME);
 
-        filterResultsFragment = FilterResultsFragment.get(searcher);
+        filterResultsFragment = FilterResultsFragment.getInstance(searcher);
         filterResultsFragment.addSeekBar("bookConditions.value", "conditions", 10.0, 40.0, 3)
                 .addSeekBar("distance", 0.0, 500000.0, 10000);
     }
