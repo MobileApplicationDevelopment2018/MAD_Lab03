@@ -59,6 +59,8 @@ public class FilterResultsFragment extends DialogFragment {
     @NonNull
     @Override
     public Dialog onCreateDialog(Bundle savedInstanceState) {
+        super.onCreateDialog(savedInstanceState);
+
         searcher = Searcher.get();
         checkHasSearcher();
 
@@ -67,13 +69,15 @@ public class FilterResultsFragment extends DialogFragment {
         LinearLayout layout = new LinearLayout(activity);
         layout.setOrientation(LinearLayout.VERTICAL);
 
-        filterViews.clear();
-        for (FilterDescription filter : futureFilters) {
-            filter.create();
-        }
-        for (int i = 0; i < filterViews.size(); i++) {
-            View v = filterViews.get(i);
-            layout.addView(v);
+        //filterViews.clear();
+        if(savedInstanceState == null) {
+            for (FilterDescription filter : futureFilters) {
+                filter.create();
+            }
+            for (int i = 0; i < filterViews.size(); i++) {
+                View v = filterViews.get(i);
+                layout.addView(v);
+            }
         }
 
         ScrollView scrollView = new ScrollView(activity);
@@ -182,7 +186,7 @@ public class FilterResultsFragment extends DialogFragment {
                         searcher.addNumericRefinement(new NumericRefinement(attribute, NumericRefinement.OPERATOR_GE, actualValue));
                     else {
                         if(name.equals("distance")) {
-                            searcher.getQuery().setAroundRadius(seekBar.getProgress());
+                            searcher.getQuery().setAroundLatLngViaIP(true).setAroundRadius((int)((seekBar.getProgress() + minValue) * (maxValue - minValue)/steps));
                         }
                     }
                 }
@@ -269,17 +273,6 @@ public class FilterResultsFragment extends DialogFragment {
 
         @Override
         protected void create() {
-
-            if(attribute != null) {
-                if (min == null || max == null) {
-                    FacetStat stats = searcher.getFacetStat(attribute);
-                    if (stats == null) {
-                        throw new RuntimeException("No facet stats were stored for `" + attribute + "`. Did you call addSeekBar(attribute, name, steps) in the activity's onCreate, as required?");
-                    }
-                    min = min == null ? stats.min : min;
-                    max = max == null ? stats.max : max;
-                }
-            }
             super.create();
         }
     }

@@ -71,7 +71,7 @@ public class UserProfile implements Serializable {
         if (this.data.profile.location.latitude == 0 && this.data.profile.location.longitude == 0) {
             this.data.profile.location.latitude = 45.116177;
             this.data.profile.location.longitude = 7.742615;
-            this.data.profile.location.name = Resources.getSystem().getString(R.string.default_city_turin);
+            this.data.profile.location.name = MAD2018Application.applicationContext.getString(R.string.default_city_turin);
         }
     }
 
@@ -84,7 +84,7 @@ public class UserProfile implements Serializable {
         if (this.data.profile.location.latitude == 0 && this.data.profile.location.longitude == 0) {
             this.data.profile.location.latitude = 45.116177;
             this.data.profile.location.longitude = 7.742615;
-            this.data.profile.location.name = Resources.getSystem().getString(R.string.default_city_turin);
+            this.data.profile.location.name = MAD2018Application.applicationContext.getString(R.string.default_city_turin);
         }
     }
 
@@ -111,7 +111,7 @@ public class UserProfile implements Serializable {
         if (this.data.profile.location.latitude == 0 && this.data.profile.location.longitude == 0) {
             this.data.profile.location.latitude = 45.116177;
             this.data.profile.location.longitude = 7.742615;
-            this.data.profile.location.name = Resources.getSystem().getString(R.string.default_city_turin);
+            this.data.profile.location.name = MAD2018Application.applicationContext.getString(R.string.default_city_turin);
         }
     }
 
