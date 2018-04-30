@@ -59,7 +59,7 @@ public class ExploreFragment extends Fragment {
 
         filterResultsFragment = FilterResultsFragment.getInstance(searcher);
         filterResultsFragment.addSeekBar("bookConditions.value", "conditions", 10.0, 40.0, 3)
-                .addSeekBar("distance", 0.0, 500000.0, 10000);
+                .addSeekBar("distance", 0.0, 1000000.0, 50);
     }
 
     @Override

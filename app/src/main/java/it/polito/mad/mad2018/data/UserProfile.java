@@ -214,6 +214,10 @@ public class UserProfile implements Serializable {
         return this.data.profile.location.name;
     }
 
+    public double[] getCoordinates() {
+        return new double[]{this.data.profile.location.latitude, this.data.profile.location.longitude};
+    }
+
     JSONObject getLocationAlgolia() {
         return this.data.profile.location.toAlgoliaGeoLoc();
     }
