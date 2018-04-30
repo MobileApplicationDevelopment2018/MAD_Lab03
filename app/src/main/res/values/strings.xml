@@ -1,15 +1,18 @@
 <resources>
     <string name="app_name">MAD Laboratory 3</string>
     <string name="activity_main">Home</string>
-    <string name="show_profile">Show Profile</string>
-    <string name="edit_profile">Edit Profile</string>
-    <string name="save_profile">Save Profile</string>
-    <string name="add_book">Add Book</string>
-    <string name="book_details">Book Details</string>
+    <string name="my_profile">My profile</string>
+    <string name="user_profile">%1$s\'s profile</string>
+    <string name="edit_profile">Edit your profile</string>
+    <string name="save_profile">Save your profile</string>
+    <string name="add_book">Add book</string>
+    <string name="book_details">Book details</string>
 
     <string name="profile_picture">Profile picture</string>
     <string name="send_email">Send e-mail</string>
     <string name="show_location">Show location</string>
+    <string name="owned_books">Owned books</string>
+    <string name="show_owned_book">Show owned books</string>
     <string name="lent_books">Lent books</string>
     <string name="borrowed_books">Borrowed books</string>
     <string name="to_be_returned">To be returned</string>
@@ -46,7 +49,8 @@
     <string name="nav_header_desc">Navigation header</string>
     <string name="explore">Explore</string>
     <string name="my_library">My library</string>
-    <string name="profile">Your profile</string>
+    <string name="user_library">%1$s\'s library</string>
+    <string name="profile">My profile</string>
 
     <string name="sign_in">Sign In</string>
     <string name="sign_out">Sign Out</string>
@@ -135,5 +139,5 @@
     <string name="error_occurred">An error occurred</string>
     <string name="confirm_delete">Are you sure you want to delete the book?\nThis operation cannot be undone</string>
     <string name="default_city_turin">Turin</string>
-
+    <string name="show_profile">Show profile</string>
 </resources>

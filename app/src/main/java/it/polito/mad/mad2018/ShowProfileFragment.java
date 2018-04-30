@@ -1,5 +1,6 @@
 package it.polito.mad.mad2018;
 
+import android.content.Context;
 import android.content.Intent;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
@@ -25,11 +26,13 @@ import java.util.Locale;
 import it.polito.mad.mad2018.data.UserProfile;
 import it.polito.mad.mad2018.utils.GlideApp;
 import it.polito.mad.mad2018.utils.GlideRequest;
+import it.polito.mad.mad2018.utils.Utilities;
 
 public class ShowProfileFragment extends Fragment {
 
     private static final String EDITABLE_KEY = "editable_key";
 
+    private OnShowOwnedBooksClickListener onShowOwnedBooksClickListener;
     private boolean isEditable;
 
     public ShowProfileFragment() { /* Required empty public constructor */ }
@@ -60,11 +63,13 @@ public class ShowProfileFragment extends Fragment {
 
         final UserProfile profile = (UserProfile) getArguments().getSerializable(UserProfile.PROFILE_INFO_KEY);
         isEditable = getArguments().getBoolean(EDITABLE_KEY);
+        assert profile != null;
 
-        getActivity().setTitle(R.string.show_profile);
+        getActivity().setTitle(profile.isLocal()
+                ? getString(R.string.my_profile)
+                : getString(R.string.user_profile, profile.getUsername()));
 
         // Fill the views with the data
-        assert profile != null;
         fillViews(profile);
 
         // MailTo button
@@ -88,6 +93,12 @@ public class ShowProfileFragment extends Fragment {
                 startActivity(showCity);
             }
         });
+
+        // ShowBooks button
+        final ImageButton showBooksButton = getView().findViewById(R.id.sp_show_books);
+        showBooksButton.setVisibility((profile.isLocal() || onShowOwnedBooksClickListener == null)
+                ? View.INVISIBLE : View.VISIBLE);
+        showBooksButton.setOnClickListener(v -> onShowOwnedBooksClickListener.OnShowOwnedBooksClick(profile));
     }
 
     @Override
@@ -99,6 +110,21 @@ public class ShowProfileFragment extends Fragment {
         super.onCreateOptionsMenu(menu, inflater);
     }
 
+    @Override
+    public void onAttach(Context context) {
+        super.onAttach(context);
+
+        if (getActivity() instanceof ShowProfileFragment.OnShowOwnedBooksClickListener) {
+            this.onShowOwnedBooksClickListener = (ShowProfileFragment.OnShowOwnedBooksClickListener) getActivity();
+        }
+    }
+
+    @Override
+    public void onDetach() {
+        super.onDetach();
+        this.onShowOwnedBooksClickListener = null;
+    }
+
     private void fillViews(@NonNull UserProfile profile) {
         assert getView() != null;
 
@@ -108,12 +134,18 @@ public class ShowProfileFragment extends Fragment {
         ImageView imageView = getView().findViewById(R.id.sp_profile_picture);
 
         RatingBar rating = getView().findViewById(R.id.sp_rating_bar);
+        TextView ownedBooks = getView().findViewById(R.id.sp_owned_books_number);
         TextView lentBooks = getView().findViewById(R.id.sp_lent_books_number);
         TextView borrowedBooks = getView().findViewById(R.id.sp_borrowed_books_number);
         TextView toBeReturnedBooks = getView().findViewById(R.id.sp_to_be_returned_number);
 
         username.setText(profile.getUsername());
         location.setText(profile.getLocationOrDefault());
+
+        getView().findViewById(R.id.sp_card_description).setVisibility(
+                Utilities.isNullOrWhitespace(profile.getBiography())
+                        ? View.GONE : View.VISIBLE
+        );
         biography.setText(profile.getBiography());
 
         GlideRequest<Drawable> thumbnail = GlideApp
@@ -133,8 +165,13 @@ public class ShowProfileFragment extends Fragment {
         rating.setRating(profile.getRating());
 
         Locale currentLocale = getResources().getConfiguration().locale;
+        ownedBooks.setText(String.format(currentLocale, "%d", profile.getOwnedBooksCount()));
         lentBooks.setText(String.format(currentLocale, "%d", profile.getLentBooksCount()));
         borrowedBooks.setText(String.format(currentLocale, "%d", profile.getBorrowedBooksCount()));
         toBeReturnedBooks.setText(String.format(currentLocale, "%d", profile.getToBeReturnedBooksCount()));
+    }
+
+    public interface OnShowOwnedBooksClickListener {
+        void OnShowOwnedBooksClick(UserProfile profile);
     }
 }

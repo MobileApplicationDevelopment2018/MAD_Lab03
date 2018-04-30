@@ -127,6 +127,11 @@
                 android:padding="4dp" />
         </LinearLayout>
 
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="0.3dp"
+            android:background="@color/colorPrimary" />
+
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -145,6 +150,11 @@
                 android:layout_height="wrap_content"
                 android:padding="4dp" />
         </LinearLayout>
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="0.3dp"
+            android:background="@color/colorPrimary" />
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -200,48 +210,6 @@
 
         <View
             android:id="@+id/fbi_line_extra"
-            android:layout_width="match_parent"
-            android:layout_height="0.3dp"
-            android:background="@color/colorPrimary" />
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:padding="16dp">
-
-            <TextView
-                style="@style/InputLabel"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_gravity="center_vertical"
-                android:layout_marginEnd="16dp"
-                android:text="@string/hint_location" />
-
-            <me.gujun.android.taggroup.TagGroup
-                android:id="@+id/fbi_book_location"
-                style="@style/TagGroup"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_gravity="center_vertical"
-                android:layout_weight="1"
-                android:inputType="text"
-                android:maxLength="@integer/max_length_tag"
-                android:padding="16dp"
-                app:atg_isAppendMode="false" />
-
-            <android.support.v7.widget.AppCompatImageButton
-                android:id="@+id/fbi_locate_icon"
-                style="@style/Widget.AppCompat.Button.Colored"
-                android:layout_width="48dp"
-                android:contentDescription="@string/show_location"
-                android:layout_marginStart="8dp"
-                android:src="@drawable/ic_location_on_black_24dp"
-                android:tint="@color/colorIcon"
-                android:layout_height="48dp" />
-        </LinearLayout>
-
-        <View
             android:layout_width="match_parent"
             android:layout_height="0.3dp"
             android:background="@color/colorPrimary" />

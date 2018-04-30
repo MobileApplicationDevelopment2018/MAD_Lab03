@@ -84,8 +84,12 @@ public class MainActivity extends AppCompatActivityDialog<MainActivity.DialogID>
     protected void onStart() {
         super.onStart();
 
-        if (UserProfile.localInstance == null && firebaseAuth.getCurrentUser() != null) {
-            setOnProfileLoadedListener();
+        if (firebaseAuth.getCurrentUser() != null) {
+            if (UserProfile.localInstance == null) {
+                setOnProfileLoadedListener();
+            } else {
+                updateNavigationView();
+            }
         }
     }
 

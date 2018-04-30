@@ -67,12 +67,6 @@ public class UserProfile implements Serializable {
         this.localImageToBeDeleted = false;
         this.localImagePath = null;
         trimFields(resources);
-
-        if (this.data.profile.location.latitude == 0 && this.data.profile.location.longitude == 0) {
-            this.data.profile.location.latitude = 45.116177;
-            this.data.profile.location.longitude = 7.742615;
-            this.data.profile.location.name = MAD2018Application.applicationContext.getString(R.string.default_city_turin);
-        }
     }
 
     public UserProfile(@NonNull UserProfile other) {
@@ -80,12 +74,6 @@ public class UserProfile implements Serializable {
         this.data = new Data(other.data);
         this.localImageToBeDeleted = false;
         this.localImagePath = null;
-
-        if (this.data.profile.location.latitude == 0 && this.data.profile.location.longitude == 0) {
-            this.data.profile.location.latitude = 45.116177;
-            this.data.profile.location.longitude = 7.742615;
-            this.data.profile.location.name = MAD2018Application.applicationContext.getString(R.string.default_city_turin);
-        }
     }
 
     public UserProfile(@NonNull FirebaseUser user) {
@@ -108,11 +96,9 @@ public class UserProfile implements Serializable {
 
         }
 
-        if (this.data.profile.location.latitude == 0 && this.data.profile.location.longitude == 0) {
-            this.data.profile.location.latitude = 45.116177;
-            this.data.profile.location.longitude = 7.742615;
-            this.data.profile.location.name = MAD2018Application.applicationContext.getString(R.string.default_city_turin);
-        }
+        this.data.profile.location.latitude = 45.116177;
+        this.data.profile.location.longitude = 7.742615;
+        this.data.profile.location.name = MAD2018Application.applicationContext.getString(R.string.default_city_turin);
     }
 
     private static String getUsernameFromEmail(@NonNull String email) {
@@ -189,7 +175,7 @@ public class UserProfile implements Serializable {
 
     public void update(Place place) {
         this.data.profile.location = place == null
-                ? null
+                ? new Data.Location()
                 : new Data.Location(place);
     }
 

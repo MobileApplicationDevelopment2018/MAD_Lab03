@@ -2,13 +2,10 @@ package it.polito.mad.mad2018;
 
 import android.app.AlertDialog;
 import android.app.Dialog;
-import android.content.Intent;
 import android.graphics.drawable.Drawable;
-import android.net.Uri;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
-import android.support.v7.widget.AppCompatImageButton;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -40,6 +37,7 @@ import rm.com.longpresspopup.PopupStateListener;
 public class BookInfoFragment extends FragmentDialog<BookInfoFragment.DialogID>
         implements PopupInflaterListener, PopupStateListener {
 
+    public final static String BOOK_SHOW_OWNER_KEY = "book_show_owner_key";
     public final static String BOOK_DELETABLE_KEY = "book_deletable_key";
 
     private Book book;
@@ -51,10 +49,14 @@ public class BookInfoFragment extends FragmentDialog<BookInfoFragment.DialogID>
 
     public BookInfoFragment() { /* Required empty public constructor */ }
 
-    public static BookInfoFragment newInstance(Book book, boolean deletable) {
+    public static BookInfoFragment newInstance(Book book, boolean showOwner, boolean deletable) {
+        showOwner = showOwner && !UserProfile.isLocal(book.getOwnerID());
+        deletable = deletable && !showOwner;
+
         BookInfoFragment fragment = new BookInfoFragment();
         Bundle args = new Bundle();
         args.putSerializable(Book.BOOK_KEY, book);
+        args.putBoolean(BOOK_SHOW_OWNER_KEY, showOwner);
         args.putBoolean(BOOK_DELETABLE_KEY, deletable);
         fragment.setArguments(args);
         return fragment;
@@ -70,6 +72,7 @@ public class BookInfoFragment extends FragmentDialog<BookInfoFragment.DialogID>
 
         assert getArguments() != null;
         book = (Book) getArguments().getSerializable(Book.BOOK_KEY);
+        boolean showOwner = getArguments().getBoolean(BOOK_SHOW_OWNER_KEY);
         boolean deletable = getArguments().getBoolean(BOOK_DELETABLE_KEY);
         assert book != null;
 
@@ -79,14 +82,13 @@ public class BookInfoFragment extends FragmentDialog<BookInfoFragment.DialogID>
 
         View view = inflater.inflate(R.layout.fragment_book_info, container, false);
 
-        boolean ownedBook = UserProfile.isLocal(book.getOwnerID());
         fillViewsBook(view);
-        if (ownedBook && !deletable) {
+        if (showOwner || deletable) {
+            fillViewsOwner(view, showOwner);
+            fillViewsDelete(view, deletable);
+        } else {
             view.findViewById(R.id.fbi_extra).setVisibility(View.GONE);
             view.findViewById(R.id.fbi_line_extra).setVisibility(View.GONE);
-        } else {
-            fillViewsOwner(view, ownedBook);
-            fillViewsDelete(view, deletable && ownedBook);
         }
 
         return view;
@@ -167,19 +169,17 @@ public class BookInfoFragment extends FragmentDialog<BookInfoFragment.DialogID>
         }
     }
 
-    private void fillViewsOwner(View view, boolean ownedBook) {
+    private void fillViewsOwner(View view, boolean showOwner) {
         View ownerView = view.findViewById(R.id.fbi_layout_owner);
-        ownerView.setVisibility(ownedBook ? View.GONE : View.VISIBLE);
+        ownerView.setVisibility(showOwner ? View.VISIBLE : View.GONE);
 
-        if (ownedBook) {
+        if (!showOwner) {
             return;
         }
 
         TextView ownerNameTextView = view.findViewById(R.id.fbi_book_owner);
         ProgressBar progressBarLoading = view.findViewById(R.id.fbi_loading_owner);
         Button ownerProfileButton = view.findViewById(R.id.fbi_show_profile_button);
-        TagGroup bookLocation = view.findViewById(R.id.fbi_book_location);
-        AppCompatImageButton buttonLocation = view.findViewById(R.id.fbi_locate_icon);
 
         progressBarLoading.setVisibility(owner == null ? View.VISIBLE : View.GONE);
         ownerNameTextView.setVisibility(owner == null ? View.GONE : View.VISIBLE);
@@ -187,16 +187,6 @@ public class BookInfoFragment extends FragmentDialog<BookInfoFragment.DialogID>
 
         if (owner != null) {
             ownerNameTextView.setText(owner.getUsername());
-            bookLocation.setTags(owner.getLocation());
-            buttonLocation.setOnClickListener(v -> {
-                if (owner.getLocation() == null)
-                    return;
-
-                Uri uri = Uri.parse("http://maps.google.co.in/maps?q=" + owner.getLocation());
-                Intent showCity = new Intent(Intent.ACTION_VIEW, uri);
-                if (showCity.resolveActivity(getActivity().getPackageManager()) != null)
-                    startActivity(showCity);
-            });
         }
 
         ownerProfileButton.setOnClickListener(v -> {
@@ -215,8 +205,9 @@ public class BookInfoFragment extends FragmentDialog<BookInfoFragment.DialogID>
     }
 
     private void setOnProfileLoadedListener() {
-        boolean ownedBook = UserProfile.isLocal(book.getOwnerID());
-        if (owner != null || ownedBook)
+        assert getArguments() != null;
+        boolean showOwner = getArguments().getBoolean(BOOK_SHOW_OWNER_KEY);
+        if (owner != null || !showOwner)
             return;
 
         this.profileListener = UserProfile.setOnProfileLoadedListener(
@@ -232,7 +223,7 @@ public class BookInfoFragment extends FragmentDialog<BookInfoFragment.DialogID>
                         if (data != null) {
                             owner = new UserProfile(book.getOwnerID(), data, getResources());
                             assert getView() != null;
-                            fillViewsOwner(getView(), false);
+                            fillViewsOwner(getView(), true);
                         }
                     }
 

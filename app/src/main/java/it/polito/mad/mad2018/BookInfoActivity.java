@@ -11,11 +11,15 @@ import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.ValueEventListener;
 
 import it.polito.mad.mad2018.data.Book;
+import it.polito.mad.mad2018.data.UserProfile;
+import it.polito.mad.mad2018.library.MyBooksFragment;
 
-public class BookInfoActivity extends AppCompatActivity {
+public class BookInfoActivity extends AppCompatActivity
+        implements ShowProfileFragment.OnShowOwnedBooksClickListener {
 
     private Book book;
     private String bookId;
+    private boolean bookShowOwner;
     private boolean bookDeletable;
 
     private ValueEventListener bookListener;
@@ -36,10 +40,12 @@ public class BookInfoActivity extends AppCompatActivity {
         if (savedInstanceState != null) {
             this.book = (Book) savedInstanceState.getSerializable(Book.BOOK_KEY);
             this.bookId = savedInstanceState.getString(Book.BOOK_ID_KEY);
-            this.bookDeletable = savedInstanceState.getBoolean(BookInfoFragment.BOOK_DELETABLE_KEY, false);
+            this.bookShowOwner = savedInstanceState.getBoolean(BookInfoFragment.BOOK_SHOW_OWNER_KEY);
+            this.bookDeletable = savedInstanceState.getBoolean(BookInfoFragment.BOOK_DELETABLE_KEY);
         } else {
             this.book = (Book) this.getIntent().getSerializableExtra(Book.BOOK_KEY);
             this.bookId = book == null ? this.getIntent().getStringExtra(Book.BOOK_ID_KEY) : book.getBookId();
+            this.bookShowOwner = this.getIntent().getBooleanExtra(BookInfoFragment.BOOK_SHOW_OWNER_KEY, true);
             this.bookDeletable = this.getIntent().getBooleanExtra(BookInfoFragment.BOOK_DELETABLE_KEY, false);
 
             if (book != null) {
@@ -55,6 +61,7 @@ public class BookInfoActivity extends AppCompatActivity {
         super.onSaveInstanceState(outState);
         outState.putSerializable(Book.BOOK_KEY, book);
         outState.putSerializable(Book.BOOK_ID_KEY, bookId);
+        outState.putBoolean(BookInfoFragment.BOOK_SHOW_OWNER_KEY, bookShowOwner);
         outState.putBoolean(BookInfoFragment.BOOK_DELETABLE_KEY, bookDeletable);
     }
 
@@ -82,7 +89,7 @@ public class BookInfoActivity extends AppCompatActivity {
     private void showBookInfoFragment() {
         findViewById(R.id.bi_loading).setVisibility(View.GONE);
         getSupportFragmentManager().beginTransaction()
-                .replace(R.id.bi_main_fragment, BookInfoFragment.newInstance(book, bookDeletable))
+                .replace(R.id.bi_main_fragment, BookInfoFragment.newInstance(book, bookShowOwner, bookDeletable))
                 .commit();
     }
 
@@ -124,5 +131,13 @@ public class BookInfoActivity extends AppCompatActivity {
             return true;
         }
         return false;
+    }
+
+    @Override
+    public void OnShowOwnedBooksClick(UserProfile profile) {
+        getSupportFragmentManager().beginTransaction()
+                .replace(R.id.bi_main_fragment, MyBooksFragment.newInstance(profile))
+                .addToBackStack(null)
+                .commit();
     }
 }
