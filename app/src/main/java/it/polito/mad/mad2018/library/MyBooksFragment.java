@@ -3,9 +3,9 @@ package it.polito.mad.mad2018.library;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.Fragment;
-import android.support.v4.app.FragmentManager;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
@@ -46,18 +46,17 @@ public class MyBooksFragment extends Fragment {
                              Bundle savedInstanceState) {
 
         View view = inflater.inflate(R.layout.fragment_my_books, container, false);
-        FragmentManager fragmentManager = getFragmentManager();
-        assert fragmentManager != null;
-
-        final FloatingActionButton floatingActionButton = view.findViewById(R.id.fmb_add_book);
-        floatingActionButton.setOnClickListener(v -> {
-            Intent toAddBook = new Intent(getActivity(), AddBookActivity.class);
-            startActivity(toAddBook);
-        });
 
         assert getArguments() != null;
         profile = (UserProfile) getArguments().getSerializable(UserProfile.PROFILE_INFO_KEY);
         assert profile != null;
+
+        final FloatingActionButton floatingActionButton = view.findViewById(R.id.fmb_add_book);
+        floatingActionButton.setVisibility(profile.isLocal() ? View.VISIBLE : View.GONE);
+        floatingActionButton.setOnClickListener(v -> {
+            Intent toAddBook = new Intent(getActivity(), AddBookActivity.class);
+            startActivity(toAddBook);
+        });
 
         View noBooksView = view.findViewById(R.id.fmb_no_books);
         RecyclerView recyclerView = view.findViewById(R.id.fmb_recycler_view);
@@ -72,12 +71,23 @@ public class MyBooksFragment extends Fragment {
         adapter = new BookAdapter(options, (v, model) -> {
             Intent toBookInfo = new Intent(getActivity(), BookInfoActivity.class);
             toBookInfo.putExtra(Book.BOOK_KEY, model);
-            toBookInfo.putExtra(BookInfoFragment.BOOK_DELETABLE_KEY, true);
+            toBookInfo.putExtra(BookInfoFragment.BOOK_SHOW_OWNER_KEY, false);
+            toBookInfo.putExtra(BookInfoFragment.BOOK_DELETABLE_KEY, profile.isLocal());
             startActivity(toBookInfo);
         }, onItemCountChangedListener);
         recyclerView.setAdapter(adapter);
 
         return view;
+    }
+
+    @Override
+    public void onActivityCreated(@Nullable Bundle savedInstanceState) {
+        super.onActivityCreated(savedInstanceState);
+
+        assert getActivity() != null;
+        getActivity().setTitle(profile.isLocal()
+                ? getString(R.string.my_library)
+                : getString(R.string.user_library, profile.getUsername()));
     }
 
     @Override

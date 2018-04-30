@@ -10,7 +10,7 @@
     <com.algolia.instantsearch.ui.views.Hits
         android:id="@+id/algolia_hits"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="match_parent"
         algolia:itemLayout="@layout/item_book" />
 
 </FrameLayout>

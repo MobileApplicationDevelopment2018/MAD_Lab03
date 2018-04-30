@@ -1,15 +1,18 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">MAD Laboratorio 3</string>
-    <string name="show_profile">Mostra Profilo</string>
-    <string name="edit_profile">Modifica Profilo</string>
-    <string name="save_profile">Salva Profilo</string>
-    <string name="add_book">Aggiungi Libro</string>
+    <string name="my_profile">Il mio profilo</string>
+    <string name="user_profile">Il profilo di %1$s</string>
+    <string name="edit_profile">Modifica il tuo profilo</string>
+    <string name="save_profile">Salva il tuo profilo</string>
+    <string name="add_book">Aggiungi libro</string>
     <string name="book_details">Dettagli del libro</string>
 
     <string name="profile_picture">Immagine profilo</string>
     <string name="send_email">Invia e-mail</string>
     <string name="show_location">Visualizza città</string>
+    <string name="owned_books">Libri posseduti</string>
+    <string name="show_owned_book">Visualizza i libri posseduti</string>
     <string name="lent_books">Libri prestati</string>
     <string name="borrowed_books">Libri ricevuti</string>
     <string name="to_be_returned">Da restituire</string>
@@ -41,6 +44,7 @@
     <string name="number_zero">0</string>
     <string name="activity_main">Home</string>
     <string name="my_library">Libreria</string>
+    <string name="user_library">La libreria di %1$s</string>
     <string name="anonymous">Non ancora loggato</string>
     <string name="auto_fill">Auto-Fill</string>
     <string name="complete_profile">Controlla e completa le tue informazioni se vuoi</string>
@@ -54,7 +58,7 @@
     <string name="hint_isbn">ISBN</string>
     <string name="hint_publisher">Casa Editrice</string>
     <string name="hint_title">Titolo</string>
-    <string name="profile">Il tuo profilo</string>
+    <string name="profile">Il mio profilo</string>
     <string name="saving_data">Salvataggio dei tuoi dati in corso. Attendere…</string>
     <string name="sign_in">Accedi</string>
     <string name="sign_in_cancelled">Accesso cancellato</string>
@@ -118,4 +122,5 @@
     <string name="error_occurred">Si è verificato un errore</string>
     <string name="confirm_delete">Sei sicuro di voler eliminare il libro?\nQuesta operazione non può essere annullata</string>
     <string name="default_city_turin">Torino</string>
+    <string name="show_profile">Mostra il mio profilo</string>
 </resources>
