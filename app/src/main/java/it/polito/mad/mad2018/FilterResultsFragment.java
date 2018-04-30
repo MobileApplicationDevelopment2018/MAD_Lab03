@@ -8,7 +8,6 @@ import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.DialogFragment;
 import android.support.v4.app.FragmentActivity;
-import android.text.Html;
 import android.util.Log;
 import android.util.SparseArray;
 import android.view.LayoutInflater;
@@ -18,6 +17,7 @@ import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.SeekBar;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.algolia.instantsearch.R;
 import com.algolia.instantsearch.helpers.Searcher;
@@ -44,7 +44,7 @@ public class FilterResultsFragment extends DialogFragment {
      * @param searcher the searcher object to associate with this fragment.
      * @return a fragment ready to use.
      */
-    public static FilterResultsFragment get(Searcher searcher) {
+    public static FilterResultsFragment getInstance(Searcher searcher) {
         final FilterResultsFragment fragment = new FilterResultsFragment();
         fragment.searcher = searcher; //storing the searcher for method calls before onCreateDialog, like addSeekBar
         return fragment;
@@ -65,38 +65,35 @@ public class FilterResultsFragment extends DialogFragment {
         checkHasSearcher();
 
         final FragmentActivity activity = getActivity();
-        AlertDialog.Builder b = new AlertDialog.Builder(activity);
+        AlertDialog.Builder builder = new AlertDialog.Builder(activity);
         LinearLayout layout = new LinearLayout(activity);
         layout.setOrientation(LinearLayout.VERTICAL);
 
-        //filterViews.clear();
-        if(savedInstanceState == null) {
-            for (FilterDescription filter : futureFilters) {
-                filter.create();
-            }
-            for (int i = 0; i < filterViews.size(); i++) {
-                View v = filterViews.get(i);
-                layout.addView(v);
-            }
+        for (FilterDescription filter : futureFilters) {
+            filter.create();
+        }
+        for (int i = 0; i < filterViews.size(); i++) {
+            View v = filterViews.get(i);
+            layout.addView(v);
         }
 
         ScrollView scrollView = new ScrollView(activity);
         scrollView.addView(layout);
-        b.setTitle("Filter results").setView(scrollView)
+        builder.setTitle("Filter results").setView(scrollView)
                 .setPositiveButton("Search", (dialog, which) -> {
                     searcher.search();
                     dialog.dismiss();
                 })
                 .setNegativeButton("Cancel", (dialog, which) -> dialog.dismiss());
-        return b.create();
+        return builder.create();
     }
 
     /**
      * Add a SeekBar to the fragment, automatically fetching min and max values for its attribute.
      * This method <b>MUST</b> be called in the enclosing activity's <code>onCreate</code> to setup the required facets <b>before</b> the fragment is created.
      *
-     * @param name the attribute this SeekBar will filter on.
-     * @param steps     the amount of steps between min and max.
+     * @param name  the attribute this SeekBar will filter on.
+     * @param steps the amount of steps between min and max.
      * @return the fragment to allow chaining calls.
      */
     public FilterResultsFragment addSeekBar(final String name, final Double min, final Double max, final int steps) {
@@ -154,17 +151,13 @@ public class FilterResultsFragment extends DialogFragment {
             final double maxValue = ((SeekBarDescription) filter).max;
             final int steps = ((SeekBarDescription) filter).steps;
 
-            final TextView tv = filterLayout.findViewById(R.id.dialog_seekbar_text);
+            final TextView textView = filterLayout.findViewById(R.id.dialog_seekbar_text);
             final SeekBar seekBar = filterLayout.findViewById(R.id.dialog_seekbar_bar);
 
-            final NumericRefinement currentFilter = searcher.getNumericRefinement(attribute, NumericRefinement.OPERATOR_GT);
-
-            if (currentFilter != null && currentFilter.value != 0) {
-                final int progressValue = (int) ((currentFilter.value - minValue) * steps / (maxValue - minValue));
-                seekBar.setProgress(progressValue);
-            }
-
             seekBar.setMax(steps);
+            final double actualValue = getActualValue(seekBar, minValue, maxValue, steps);
+            updateSeekBarText(textView, name, actualValue, minValue);
+
             seekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
                 @Override
                 public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
@@ -181,18 +174,16 @@ public class FilterResultsFragment extends DialogFragment {
                 }
 
                 private void onUpdate(final SeekBar seekBar) {
-                    final double actualValue = updateSeekBarText(tv, seekBar, name, minValue, maxValue, steps);
-                    if(attribute != null)
+                    final double actualValue = getActualValue(seekBar, minValue, maxValue, steps);
+                    updateSeekBarText(textView, name, actualValue, minValue);
+                    if (attribute != null)
                         searcher.addNumericRefinement(new NumericRefinement(attribute, NumericRefinement.OPERATOR_GE, actualValue));
-                    else {
-                        if(name.equals("distance")) {
-                            searcher.getQuery().setAroundLatLngViaIP(true).setAroundRadius((int)((seekBar.getProgress() + minValue) * (maxValue - minValue)/steps));
-                        }
+                    else if (name.equals("distance")) {
+                        searcher.getQuery().setAroundLatLngViaIP(true).setAroundRadius((int) actualValue);
                     }
                 }
             });
 
-            updateSeekBarText(tv, name, currentFilter != null ? currentFilter.value : minValue, minValue);
         } else {
             final TextView tv = filterLayout.findViewById(R.id.dialog_checkbox_text);
             final CheckBox checkBox = filterLayout.findViewById(R.id.dialog_checkbox_box);
@@ -219,20 +210,22 @@ public class FilterResultsFragment extends DialogFragment {
         filterViews.put(filter.position, filterLayout);
     }
 
-    private double updateSeekBarText(final TextView textView, final SeekBar seekBar, final String name, final double minValue, final double maxValue, int steps) {
+    private double getActualValue(final SeekBar seekBar, final double minValue, final double maxValue, int steps) {
         int progress = seekBar.getProgress();
-        final double value = minValue + progress * (maxValue - minValue) / steps;
-        updateSeekBarText(textView, name, value, minValue);
-        return value;
+        return minValue + progress * (maxValue - minValue) / steps;
     }
 
     private void updateSeekBarText(final TextView textView, final String name, final double value, final double minValue) {
         String text = "";
 
-        if(name.equals("conditions")) {
-            text = "at least in " + getResources().getString(Book.BookConditions.getStringId((int)value)).toLowerCase() + " conditions";
-        } else if(name.equals("distance")) {
-            text = "maximum distance: " + (int)value/1000 + " km";
+        if (name.equals("conditions")) {
+            if(value == minValue) {
+                text = "any condition";
+            } else {
+                text = "at least in " + getResources().getString(Book.BookConditions.getStringId((int) value)).toLowerCase() + " conditions";
+            }
+        } else if (name.equals("distance")) {
+            text = "maximum distance: " + (int) value / 1000 + " km";
         }
         textView.setText(text);
     }
