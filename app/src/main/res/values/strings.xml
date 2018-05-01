@@ -143,4 +143,8 @@
     <string name="action_search">Search</string>
     <string name="action_filter">Filter</string>
     <string name="search_by_algolia_logo">Logo Search by Algolia</string>
+    <string name="filter_results">Filter results</string>
+    <string name="no_distance_filter">no distance filter</string>
+    <string name="maximum_distance">maximum distance: %d km</string>
+    <string name="conditions_filter">at least in %s conditions</string>
 </resources>
