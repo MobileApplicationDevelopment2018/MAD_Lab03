@@ -3,15 +3,11 @@ package it.polito.mad.mad2018.widgets;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 
-import com.algolia.instantsearch.helpers.Searcher;
 import com.algolia.instantsearch.model.AlgoliaResultsListener;
-import com.algolia.instantsearch.model.AlgoliaSearcherListener;
 import com.algolia.instantsearch.model.SearchResults;
-import com.algolia.search.saas.Query;
 import com.google.android.gms.maps.CameraUpdate;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
-import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.LatLngBounds;
@@ -24,44 +20,48 @@ import org.json.JSONObject;
 import java.util.ArrayList;
 import java.util.List;
 
-public class MapWidget implements OnMapReadyCallback, AlgoliaSearcherListener, AlgoliaResultsListener {
-    private static final String TAG = "MapWidget";
-    @NonNull
-    final SupportMapFragment mapFragment;
-    public GoogleMap googleMap;
+import it.polito.mad.mad2018.data.Book;
+
+public class MapWidget implements AlgoliaResultsListener {
+
+    private GoogleMap googleMap;
+
     @NonNull
     private List<JSONObject> hits = new ArrayList<>();
 
     public MapWidget(@NonNull final SupportMapFragment mapFragment) {
-        this.mapFragment = mapFragment;
-        this.mapFragment.getMapAsync(this);
+        mapFragment.getMapAsync(map -> {
+            this.googleMap = map;
+            updateMapMarkers();
+        });
     }
 
-    @Override
-    public void onMapReady(final GoogleMap googleMap) {
-        this.googleMap = googleMap;
-        updateMapPOIs();
+    private static MarkerOptions buildMarker(@NonNull JSONObject jsonObject) {
+        final MarkerOptions marker = new MarkerOptions();
+
+        try {
+            marker.title(jsonObject.getString(Book.ALGOLIA_BOOK_TITLE_KEY));
+
+            JSONObject geoloc = jsonObject.getJSONObject(Book.ALGOLIA_GEOLOC_KEY);
+            final Double latitude = geoloc.getDouble(Book.ALGOLIA_GEOLOC_LAT_KEY);
+            final Double longitude = geoloc.getDouble(Book.ALGOLIA_GEOLOC_LON_KEY);
+            marker.position(new LatLng(latitude, longitude));
+
+            return marker;
+
+        } catch (JSONException e) {
+            return null;
+        }
     }
 
     @Override
     public void onResults(@NonNull SearchResults results, boolean isLoadingMore) {
         addHits(results, !isLoadingMore);
         if (googleMap != null) {
-            googleMap.setOnMapLoadedCallback(new GoogleMap.OnMapLoadedCallback() {
-                @Override
-                public void onMapLoaded() {
-                    updateMapPOIs();
-                }
-            });
+            googleMap.setOnMapLoadedCallback(this::updateMapMarkers);
         }
     }
 
-    /**
-     * Adds or replaces hits to/in this widget.
-     *
-     * @param results     A {@link JSONObject} containing hits.
-     * @param isReplacing {@code true} if the given hits should replace the current hits.
-     */
     private void addHits(@Nullable SearchResults results, boolean isReplacing) {
         if (results == null) {
             if (isReplacing) {
@@ -69,6 +69,7 @@ public class MapWidget implements OnMapReadyCallback, AlgoliaSearcherListener, A
             }
             return;
         }
+
         final JSONArray newHits = results.hits;
         if (isReplacing) {
             hits.clear();
@@ -81,36 +82,25 @@ public class MapWidget implements OnMapReadyCallback, AlgoliaSearcherListener, A
         }
     }
 
-    private void updateMapPOIs() {
+    private void updateMapMarkers() {
         googleMap.clear();
         if (hits.isEmpty())
             return;
 
         LatLngBounds.Builder builder = new LatLngBounds.Builder();
-        LatLng location = new LatLng(45.116177, 7.742615);
-        MarkerOptions marker = new MarkerOptions().position(location);
+
         for (final JSONObject hit : hits) {
-            location = new LatLng(45.116177, 7.742615);
-            marker = new MarkerOptions().position(location);
-            try {
-                location = new LatLng(hit.getJSONObject("_geoloc").getDouble("lat"), hit.getJSONObject("_geoloc").getDouble("lon"));
-                marker = new MarkerOptions().position(location).title(hit.getString("title"));
-            } catch (JSONException e) {
-                e.printStackTrace();
+            MarkerOptions marker = buildMarker(hit);
+            if (marker != null) {
+                builder.include(marker.getPosition());
+                googleMap.addMarker(marker);
             }
-            builder.include(marker.getPosition());
-            googleMap.addMarker(marker);
         }
 
         LatLngBounds bounds = builder.build();
-        // update the camera
-        int padding = 10;
+
+        int padding = 25;
         CameraUpdate cu = CameraUpdateFactory.newLatLngBounds(bounds, padding);
         googleMap.animateCamera(cu);
-    }
-
-    @Override
-    public void initWithSearcher(@NonNull Searcher searcher) {
-        searcher.setQuery(searcher.getQuery().setAroundRadius(Query.RADIUS_ALL));
     }
 }

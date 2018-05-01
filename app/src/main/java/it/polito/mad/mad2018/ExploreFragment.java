@@ -1,15 +1,11 @@
 package it.polito.mad.mad2018;
 
 import android.content.Intent;
-import android.content.pm.PackageManager;
-import android.location.Location;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.design.widget.AppBarLayout;
-import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.Fragment;
-import android.support.v4.app.FragmentTransaction;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -22,11 +18,7 @@ import android.widget.Toast;
 import com.algolia.instantsearch.helpers.InstantSearch;
 import com.algolia.instantsearch.helpers.Searcher;
 import com.algolia.instantsearch.ui.views.Hits;
-import com.algolia.search.saas.AbstractQuery;
-import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
-import com.google.android.gms.location.LocationListener;
-import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.maps.SupportMapFragment;
 
@@ -37,10 +29,7 @@ import it.polito.mad.mad2018.data.Book;
 import it.polito.mad.mad2018.data.Constants;
 import it.polito.mad.mad2018.widgets.MapWidget;
 
-import static android.Manifest.permission.ACCESS_COARSE_LOCATION;
-import static android.Manifest.permission.ACCESS_FINE_LOCATION;
-
-public class ExploreFragment extends Fragment implements GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener, LocationListener {
+public class ExploreFragment extends Fragment {
 
     private Searcher searcher;
     private InstantSearch helper;
@@ -48,18 +37,10 @@ public class ExploreFragment extends Fragment implements GoogleApiClient.Connect
 
     private AppBarLayout appBarLayout;
     private View algoliaLogoLayout;
-    private MapWidget mapWidget;
-    GoogleApiClient mGoogleApiClient;
-    private LocationRequest mLocationRequest;
-    private Location lastLocation;
+    private GoogleApiClient mGoogleApiClient;
 
-    private long UPDATE_INTERVAL = 20000;  /* 20 secs */
-    private long FASTEST_INTERVAL = 10000; /* 10 secs */
-    private static final int REQUEST_LOCATION = 1;
 
-    public ExploreFragment() {
-        // Required empty public constructor
-    }
+    public ExploreFragment() { /* Required empty public constructor */ }
 
     public static ExploreFragment newInstance() {
         ExploreFragment fragment = new ExploreFragment();
@@ -91,12 +72,12 @@ public class ExploreFragment extends Fragment implements GoogleApiClient.Connect
 
         setHitsOnClickListener(view);
 
-        FragmentTransaction fragmentTransaction =
-                getFragmentManager().beginTransaction();
         final SupportMapFragment mapFragment = SupportMapFragment.newInstance();
-        fragmentTransaction.replace(R.id.map_placeholder, mapFragment);
-        fragmentTransaction.commit();
-        mapWidget = new MapWidget(mapFragment);
+        assert getFragmentManager() != null;
+        getFragmentManager().beginTransaction()
+                .replace(R.id.map_placeholder, mapFragment)
+                .commit();
+        MapWidget mapWidget = new MapWidget(mapFragment);
         searcher.registerResultListener(mapWidget);
 
         return view;
@@ -192,78 +173,9 @@ public class ExploreFragment extends Fragment implements GoogleApiClient.Connect
     }
 
     private void setupGoogleAPI() {
+        assert getContext() != null;
         mGoogleApiClient = new GoogleApiClient.Builder(getContext())
                 .addApi(LocationServices.API)
-                .addConnectionCallbacks(this)
-                .addOnConnectionFailedListener(this)
                 .build();
-    }
-
-    @Override
-    public void onConnected(@Nullable Bundle bundle) {
-        startLocation();
-    }
-
-    private void startLocation() {
-        if (ActivityCompat.checkSelfPermission(getContext(), ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED &&
-                ActivityCompat.checkSelfPermission(getContext(), ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            ActivityCompat.requestPermissions(getActivity(),
-                    new String[]{ACCESS_FINE_LOCATION},
-                    REQUEST_LOCATION);
-            return;
-        }
-
-        lastLocation = LocationServices.FusedLocationApi.getLastLocation(mGoogleApiClient);
-        updateSearch();
-        startLocationUpdates();
-        if (mapWidget.googleMap != null) {
-            mapWidget.googleMap.setMyLocationEnabled(true);
-        }
-    }
-
-    @Override
-    public void onConnectionSuspended(int i) {
-
-    }
-
-    @Override
-    public void onLocationChanged(Location location) {
-        if (getActivity() == null)
-            return;
-
-        lastLocation = location;
-        updateSearch();
-        if (mapWidget.googleMap != null) {
-            if (ActivityCompat.checkSelfPermission(getActivity().getApplicationContext(), ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED &&
-                    ActivityCompat.checkSelfPermission(getActivity().getApplicationContext(), ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-                return;
-            }
-            mapWidget.googleMap.setMyLocationEnabled(true);
-        }
-    }
-
-    @Override
-    public void onConnectionFailed(@NonNull ConnectionResult connectionResult) {
-
-    }
-
-    protected void startLocationUpdates() {
-        mLocationRequest = LocationRequest.create();
-        mLocationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
-        mLocationRequest.setInterval(UPDATE_INTERVAL);
-        mLocationRequest.setFastestInterval(FASTEST_INTERVAL);
-        if (ActivityCompat.checkSelfPermission(getContext(), ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(getActivity(), ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            Toast.makeText(getActivity().getApplicationContext(), "Enable Permissions", Toast.LENGTH_LONG).show();
-        }
-
-        LocationServices.FusedLocationApi.requestLocationUpdates(mGoogleApiClient, mLocationRequest, (LocationListener) this);
-    }
-
-    protected void updateSearch() {
-        if (lastLocation != null) {
-            final AbstractQuery.LatLng coords = new AbstractQuery.LatLng(lastLocation.getLatitude(), lastLocation.getLongitude());
-            searcher.getQuery().setAroundLatLng(coords);
-            searcher.search();
-        }
     }
 }

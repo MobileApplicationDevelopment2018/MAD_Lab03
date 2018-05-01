@@ -47,8 +47,11 @@ public class Book implements Serializable {
 
     public static final String ALGOLIA_BOOK_ID_KEY = "objectID";
     public static final String ALGOLIA_OWNER_ID_KEY = "ownerID";
+    public static final String ALGOLIA_BOOK_TITLE_KEY = "title";
     public static final String ALGOLIA_HAS_IMAGE_KEY = "hasImage";
     public static final String ALGOLIA_GEOLOC_KEY = "_geoloc";
+    public static final String ALGOLIA_GEOLOC_LAT_KEY = "lat";
+    public static final String ALGOLIA_GEOLOC_LON_KEY = "lon";
 
     public static final int INITIAL_YEAR = 1900;
     public static final int BOOK_PICTURE_SIZE = 1024;
