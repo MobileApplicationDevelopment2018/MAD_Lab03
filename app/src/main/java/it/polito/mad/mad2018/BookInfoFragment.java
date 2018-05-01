@@ -138,7 +138,7 @@ public class BookInfoFragment extends FragmentDialog<BookInfoFragment.DialogID>
 
         isbn.setText(book.getIsbn());
         title.setText(book.getTitle());
-        authors.setText(book.getAuthors(","));
+        authors.setText(book.getAuthors(", "));
         publisher.setText(Utilities.isNullOrWhitespace(book.getPublisher()) ? unknown : book.getPublisher());
         editionYear.setText(String.valueOf(book.getYear()));
         language.setText(Utilities.isNullOrWhitespace(book.getLanguage()) ? unknown : book.getLanguage());

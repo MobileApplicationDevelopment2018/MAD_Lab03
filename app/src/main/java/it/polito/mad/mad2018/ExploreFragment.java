@@ -94,19 +94,10 @@ public class ExploreFragment extends Fragment {
     @Override
     public void onStart() {
         super.onStart();
-        if (helper != null) {
-            helper.search();
-        }
 
         if (mGoogleApiClient != null) {
             mGoogleApiClient.connect();
         }
-    }
-
-    @Override
-    public void onStop() {
-        super.onStop();
-        searcher.destroy();
     }
 
     @Override
@@ -120,6 +111,7 @@ public class ExploreFragment extends Fragment {
     @Override
     public void onDestroy() {
         EventBus.getDefault().unregister(this);
+        searcher.destroy();
         super.onDestroy();
     }
 
