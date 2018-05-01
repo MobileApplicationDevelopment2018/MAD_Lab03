@@ -123,4 +123,7 @@
     <string name="confirm_delete">Sei sicuro di voler eliminare il libro?\nQuesta operazione non può essere annullata</string>
     <string name="default_city_turin">Torino</string>
     <string name="show_profile">Mostra il mio profilo</string>
+    <string name="action_search">Cerca</string>
+    <string name="action_filter">Filtra</string>
+    <string name="search_by_algolia_logo">Logo ricerca fornita da Algolia</string>
 </resources>

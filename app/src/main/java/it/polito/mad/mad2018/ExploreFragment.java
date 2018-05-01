@@ -9,20 +9,17 @@ import android.support.v4.app.Fragment;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
-import android.widget.LinearLayout;
-import android.widget.RelativeLayout;
 import android.widget.Toast;
 
-import com.algolia.instantsearch.events.ErrorEvent;
 import com.algolia.instantsearch.helpers.InstantSearch;
 import com.algolia.instantsearch.helpers.Searcher;
 import com.algolia.instantsearch.ui.views.Hits;
 
 import org.greenrobot.eventbus.EventBus;
-import org.greenrobot.eventbus.Subscribe;
 import org.json.JSONException;
 
 import it.polito.mad.mad2018.data.Book;
@@ -32,9 +29,10 @@ public class ExploreFragment extends Fragment {
 
     private Searcher searcher;
     private InstantSearch helper;
-    private AppBarLayout appBarLayout;
-    private LinearLayout searchViewLayout;
     private FilterResultsFragment filterResultsFragment;
+
+    private AppBarLayout appBarLayout;
+    private View algoliaLogoLayout;
 
     public ExploreFragment() {
         // Required empty public constructor
@@ -50,9 +48,6 @@ public class ExploreFragment extends Fragment {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        if (getArguments() != null) {
-
-        }
 
         searcher = Searcher.create(Constants.ALGOLIA_APP_ID, Constants.ALGOLIA_SEARCH_API_KEY,
                 Constants.ALGOLIA_INDEX_NAME);
@@ -66,15 +61,10 @@ public class ExploreFragment extends Fragment {
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         setHasOptionsMenu(true);
-
         View view = inflater.inflate(R.layout.fragment_explore, container, false);
+        algoliaLogoLayout = inflater.inflate(R.layout.algolia_logo_layout, null);
 
-        searchViewLayout = (LinearLayout) inflater.inflate(R.layout.search_view_layout, null);
         setHitsOnClickListener(view);
-
-        ImageView filtersButton = searchViewLayout.findViewById(R.id.show_search_filters);
-        filtersButton.setOnClickListener(v -> filterResultsFragment.show(getChildFragmentManager(), FilterResultsFragment.TAG));
-
         return view;
     }
 
@@ -84,18 +74,14 @@ public class ExploreFragment extends Fragment {
 
         assert getActivity() != null;
         getActivity().setTitle(R.string.explore);
-
-        appBarLayout = getActivity().findViewById(R.id.app_bar_layout);
-        appBarLayout.addView(searchViewLayout);
     }
 
     @Override
     public void onStart() {
         super.onStart();
-
-        helper = new InstantSearch(this.getActivity(), searcher);
-        helper.search();
-
+        if (helper != null) {
+            helper.search();
+        }
     }
 
     @Override
@@ -107,7 +93,7 @@ public class ExploreFragment extends Fragment {
     @Override
     public void onDetach() {
         if (appBarLayout != null) {
-            appBarLayout.removeView(searchViewLayout);
+            appBarLayout.removeView(algoliaLogoLayout);
         }
         super.onDetach();
     }
@@ -121,8 +107,31 @@ public class ExploreFragment extends Fragment {
     @Override
     public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
         menu.clear();
+
+        assert getActivity() != null;
         inflater.inflate(R.menu.menu_explore, menu);
+        helper = new InstantSearch(getActivity(), menu, R.id.menu_action_search, searcher);
+        helper.search();
+
+        MenuItem itemSearch = menu.findItem(R.id.menu_action_search);
+        ImageView algoliaLogo = algoliaLogoLayout.findViewById(R.id.algolia_logo);
+        algoliaLogo.setOnClickListener(v -> itemSearch.expandActionView());
+
+        appBarLayout = getActivity().findViewById(R.id.app_bar_layout);
+        appBarLayout.addView(algoliaLogoLayout);
+
         super.onCreateOptionsMenu(menu, inflater);
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            case R.id.menu_action_filter:
+                filterResultsFragment.show(getChildFragmentManager(), FilterResultsFragment.TAG);
+                return true;
+            default:
+                return super.onOptionsItemSelected(item);
+        }
     }
 
     private void setHitsOnClickListener(View view) {

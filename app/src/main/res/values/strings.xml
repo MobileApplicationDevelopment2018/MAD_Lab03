@@ -140,4 +140,7 @@
     <string name="confirm_delete">Are you sure you want to delete the book?\nThis operation cannot be undone</string>
     <string name="default_city_turin">Turin</string>
     <string name="show_profile">Show profile</string>
+    <string name="action_search">Search</string>
+    <string name="action_filter">Filter</string>
+    <string name="search_by_algolia_logo">Logo Search by Algolia</string>
 </resources>
