@@ -103,7 +103,7 @@ public class FilterResultsFragment extends DialogFragment {
                     searcher.search();
                     dialog.dismiss();
                 })
-                .setNegativeButton("Cancel", (dialog, which) -> dialog.dismiss());
+                .setNegativeButton(R.string.cancel, (dialog, which) -> dialog.dismiss());
         return builder.create();
     }
 

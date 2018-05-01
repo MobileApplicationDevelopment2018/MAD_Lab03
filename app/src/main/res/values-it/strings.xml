@@ -126,4 +126,12 @@
     <string name="action_search">Cerca</string>
     <string name="action_filter">Filtra</string>
     <string name="search_by_algolia_logo">Logo ricerca fornita da Algolia</string>
+    <string name="filter_results">Filtra risultati</string>
+    <string name="no_distance_filter">Nessun filtro sulla distanza</string>
+    <string name="maximum_distance">Massima distanza: %d km</string>
+    <string name="conditions_filter">Condizioni almeno %s</string>
+    <string name="book_condition_any">Qualsiasi condizione</string>
+    <string name="book_conditions_list">Pessime, Discrete, Buone, Perfette</string>
+    <string name="search">Cerca</string>
+    <string name="cancel">Annulla</string>
 </resources>
