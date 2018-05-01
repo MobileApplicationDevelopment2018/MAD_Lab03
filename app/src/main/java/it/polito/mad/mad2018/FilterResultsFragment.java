@@ -8,7 +8,6 @@ import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.DialogFragment;
 import android.support.v4.app.FragmentActivity;
-import android.util.Log;
 import android.util.SparseArray;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -18,11 +17,11 @@ import android.widget.ScrollView;
 import android.widget.SeekBar;
 import android.widget.TextView;
 
-import com.algolia.instantsearch.R;
 import com.algolia.instantsearch.helpers.Searcher;
 import com.algolia.instantsearch.model.FacetStat;
 import com.algolia.instantsearch.model.NumericRefinement;
 import com.algolia.search.saas.AbstractQuery;
+import com.algolia.search.saas.Query;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -50,7 +49,7 @@ public class FilterResultsFragment extends DialogFragment {
         fragment.searcher = searcher; //storing the searcher for method calls before onCreateDialog, like addSeekBar
         Bundle args = new Bundle();
         args.putInt("conditions", 0);
-        args.putInt("distance", 10000);
+        args.putInt("distance", 1000000);
         fragment.setArguments(args);
         return fragment;
     }
@@ -84,15 +83,20 @@ public class FilterResultsFragment extends DialogFragment {
         AlertDialog.Builder builder = new AlertDialog.Builder(activity);
         ScrollView scrollView = new ScrollView(activity);
         scrollView.addView(layout);
-        builder.setTitle("Filter results").setView(scrollView)
-                .setPositiveButton("Search", (dialog, which) -> {
+        builder.setTitle(getString(R.string.filter_results)).setView(scrollView)
+                .setPositiveButton(getString(R.string.search), (dialog, which) -> {
                     for (FilterDescription filter : futureFilters) {
                         SeekBarDescription seekBarDescription = (SeekBarDescription)filter;
                         if(filter.attribute != null) {
                             searcher.addNumericRefinement(new NumericRefinement(seekBarDescription.attribute, NumericRefinement.OPERATOR_GE, seekBarDescription.value));
                         } else if (filter.name.equals("distance")) {
                             double[] position = UserProfile.localInstance.getCoordinates();
-                            searcher.getQuery().setAroundLatLng(new AbstractQuery.LatLng(position[0], position[1])).setAroundRadius((int) filter.value);
+                            Query query = searcher.getQuery().setAroundLatLng(new AbstractQuery.LatLng(position[0], position[1]));
+                            if (filter.value < ((SeekBarDescription) filter).max) {
+                                query.setAroundRadius((int) filter.value);
+                            } else {
+                                query.setAroundRadius(Query.RADIUS_ALL);
+                            }
                         }
                         getArguments().putInt(seekBarDescription.name, seekBarDescription.progressValue);
                     }
@@ -173,7 +177,7 @@ public class FilterResultsFragment extends DialogFragment {
             ((SeekBarDescription) filter).progressValue = getArguments().getInt(name);
             final double actualValue = getActualValue(seekBar, minValue, maxValue, steps);
             filter.value = actualValue;
-            updateSeekBarText(textView, name, actualValue, minValue);
+            updateSeekBarText(textView, name, actualValue, minValue, maxValue);
 
             seekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
                 @Override
@@ -193,7 +197,7 @@ public class FilterResultsFragment extends DialogFragment {
                 private void onUpdate(final SeekBar seekBar) {
                     final double actualValue = getActualValue(seekBar, minValue, maxValue, steps);
                     filter.value = actualValue;
-                    updateSeekBarText(textView, name, actualValue, minValue);
+                    updateSeekBarText(textView, name, actualValue, minValue, maxValue);
                     ((SeekBarDescription) filter).progressValue = seekBar.getProgress();
                 }
             });
@@ -229,17 +233,21 @@ public class FilterResultsFragment extends DialogFragment {
         return minValue + progress * (maxValue - minValue) / steps;
     }
 
-    private void updateSeekBarText(final TextView textView, final String name, final double value, final double minValue) {
+    private void updateSeekBarText(final TextView textView, final String name, final double value, final double minValue, final double maxValue) {
         String text = "";
 
         if (name.equals("conditions")) {
             if(value == minValue) {
-                text = "any condition";
+                text = getString(R.string.book_condition_any);
             } else {
-                text = "at least in " + getResources().getString(Book.BookConditions.getStringId((int) value)).toLowerCase() + " conditions";
+                text = getString(R.string.conditions_filter, getResources().getString(Book.BookConditions.getStringId((int) value)).toLowerCase());
             }
         } else if (name.equals("distance")) {
-            text = "maximum distance: " + (int) value / 1000 + " km";
+            if(value == maxValue) {
+                text = getString(R.string.no_distance_filter);
+            } else {
+                text = getString(R.string.maximum_distance, (int) value / 1000);
+            }
         }
         textView.setText(text);
     }
