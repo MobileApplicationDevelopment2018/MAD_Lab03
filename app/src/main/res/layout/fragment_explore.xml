@@ -1,16 +1,37 @@
 <?xml version="1.0" encoding="utf-8"?>
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:algolia="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
-    android:id="@+id/fragment_explore_layout"
+    android:orientation="vertical"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    tools:context="it.polito.mad.mad2018.ExploreFragment">
+    android:layout_height="match_parent">
 
-    <com.algolia.instantsearch.ui.views.Hits
-        android:id="@+id/algolia_hits"
+    <View
+        android:id="@+id/activity_main_center"
+        android:layout_width="1dp"
+        android:layout_height="1dp"
+        android:layout_centerInParent="true" />
+
+    <FrameLayout
+        android:id="@+id/map_placeholder"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        algolia:itemLayout="@layout/item_book" />
+        android:layout_height="wrap_content"
+        android:layout_above="@id/activity_main_center"
+        android:background="@android:color/black"
+        tools:context="it.polito.mad.mad2018.ExploreFragment"></FrameLayout>
 
-</FrameLayout>
+    <FrameLayout
+        android:id="@+id/fragment_explore_layout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/activity_main_center"
+        tools:context="it.polito.mad.mad2018.ExploreFragment">
+
+        <com.algolia.instantsearch.ui.views.Hits
+            android:id="@+id/algolia_hits"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            algolia:itemLayout="@layout/item_book" />
+
+    </FrameLayout>
+</RelativeLayout>
