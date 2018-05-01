@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">MAD Laboratorio 3</string>
+    <string name="app_name">NoFAndroid</string>
     <string name="my_profile">Il mio profilo</string>
     <string name="user_profile">Il profilo di %1$s</string>
     <string name="edit_profile">Modifica il tuo profilo</string>
@@ -42,7 +42,7 @@
     <string name="nav_header_desc">Header della finestra id navigazione</string>
 
     <string name="number_zero">0</string>
-    <string name="activity_main">Home</string>
+    <string name="activity_main">NoFAndroid</string>
     <string name="my_library">Libreria</string>
     <string name="user_library">La libreria di %1$s</string>
     <string name="anonymous">Non ancora loggato</string>
