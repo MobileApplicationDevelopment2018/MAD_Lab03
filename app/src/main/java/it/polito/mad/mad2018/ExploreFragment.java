@@ -228,11 +228,14 @@ public class ExploreFragment extends Fragment implements GoogleApiClient.Connect
 
     @Override
     public void onLocationChanged(Location location) {
+        if (getActivity() == null)
+            return;
+
         lastLocation = location;
         updateSearch();
         if (mapWidget.googleMap != null) {
-            if (ActivityCompat.checkSelfPermission(getContext(), ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED &&
-                    ActivityCompat.checkSelfPermission(getContext(), ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            if (ActivityCompat.checkSelfPermission(getActivity().getApplicationContext(), ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED &&
+                    ActivityCompat.checkSelfPermission(getActivity().getApplicationContext(), ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
                 return;
             }
             mapWidget.googleMap.setMyLocationEnabled(true);
