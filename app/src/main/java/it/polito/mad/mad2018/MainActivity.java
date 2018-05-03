@@ -14,6 +14,7 @@ import android.support.v4.app.Fragment;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.widget.Toolbar;
 import android.view.MenuItem;
 import android.view.View;
@@ -26,7 +27,6 @@ import com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions;
 import com.bumptech.glide.request.RequestOptions;
 import com.bumptech.glide.signature.ObjectKey;
 import com.firebase.ui.auth.AuthUI;
-import com.firebase.ui.auth.ErrorCodes;
 import com.firebase.ui.auth.IdpResponse;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.DataSnapshot;
@@ -64,6 +64,10 @@ public class MainActivity extends AppCompatActivityDialog<MainActivity.DialogID>
                 this, drawer, toolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close);
         drawer.addDrawerListener(toggle);
         toggle.syncState();
+
+        if (savedInstanceState == null && !Utilities.isNetworkConnected(this)) {
+            openDialog(DialogID.DIALOG_NO_CONNECTION, true);
+        }
 
         firebaseAuth = FirebaseAuth.getInstance();
 
@@ -160,19 +164,12 @@ public class MainActivity extends AppCompatActivityDialog<MainActivity.DialogID>
                     return;
                 }
 
-                if (response == null) {
-                    finish();
-                    return;
-                }
-
-                if (response.getError() != null && response.getError().getErrorCode() == ErrorCodes.NO_NETWORK) {
-                    showToast(R.string.sign_in_no_internet_connection);
-                } else {
+                if (response != null) {
                     showToast(R.string.sign_in_unknown_error);
                 }
 
-                signIn();
-                break;
+                finish();
+                return;
 
             case RC_EDIT_PROFILE:
                 if (resultCode == RESULT_OK) {
@@ -238,6 +235,12 @@ public class MainActivity extends AppCompatActivityDialog<MainActivity.DialogID>
     }
 
     private void signIn() {
+
+        if (!Utilities.isNetworkConnected(this)) {
+            openDialog(DialogID.DIALOG_NO_CONNECTION, true);
+            return;
+        }
+
         startActivityForResult(
                 AuthUI.getInstance().createSignInIntentBuilder()
                         .setAvailableProviders(Arrays.asList(
@@ -381,6 +384,14 @@ public class MainActivity extends AppCompatActivityDialog<MainActivity.DialogID>
                         R.string.failed_load_data,
                         (dlg, which) -> signOut());
                 break;
+            case DIALOG_NO_CONNECTION:
+                dialog = new AlertDialog.Builder(this)
+                        .setTitle(R.string.no_internet_connection)
+                        .setMessage(R.string.internet_needed)
+                        .setPositiveButton(R.string.exit, (dlg, which) -> finish())
+                        .setCancelable(false)
+                        .show();
+                break;
         }
 
         if (dialog != null) {
@@ -391,5 +402,6 @@ public class MainActivity extends AppCompatActivityDialog<MainActivity.DialogID>
     public enum DialogID {
         DIALOG_LOADING,
         DIALOG_ERROR_RETRIEVE_DIALOG,
+        DIALOG_NO_CONNECTION,
     }
 }

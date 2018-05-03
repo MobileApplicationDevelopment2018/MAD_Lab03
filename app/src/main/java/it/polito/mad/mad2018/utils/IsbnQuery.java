@@ -1,7 +1,6 @@
 package it.polito.mad.mad2018.utils;
 
 import android.content.Context;
-import android.net.ConnectivityManager;
 import android.os.AsyncTask;
 import android.support.annotation.NonNull;
 
@@ -25,16 +24,6 @@ public class IsbnQuery extends AsyncTask<String, Object, Volumes> {
     public IsbnQuery(@NonNull Context context, @NonNull TaskListener listener) {
         this.context = new WeakReference<>(context);
         this.listener = new WeakReference<>(listener);
-    }
-
-    private static boolean isNetworkConnected(@NonNull Context context) {
-
-        ConnectivityManager connectivityManager =
-                (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
-
-        return connectivityManager != null &&
-                connectivityManager.getActiveNetworkInfo() != null &&
-                connectivityManager.getActiveNetworkInfo().isConnected();
     }
 
     @Override
@@ -69,7 +58,7 @@ public class IsbnQuery extends AsyncTask<String, Object, Volumes> {
         Context context = this.context.get();
         TaskListener listener = this.listener.get();
         if (context != null && listener != null) {
-            if (!isNetworkConnected(context)) {
+            if (!Utilities.isNetworkConnected(context)) {
                 cancel(true);
             } else {
                 listener.onTaskStarted();

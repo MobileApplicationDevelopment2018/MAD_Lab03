@@ -3,6 +3,8 @@ package it.polito.mad.mad2018.utils;
 import android.app.Dialog;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.net.ConnectivityManager;
+import android.support.annotation.NonNull;
 import android.support.annotation.StringRes;
 import android.support.v7.app.AlertDialog;
 
@@ -19,6 +21,16 @@ public class Utilities {
                 .setPositiveButton(context.getString(android.R.string.ok), listener)
                 .setCancelable(false)
                 .show();
+    }
+
+    public static boolean isNetworkConnected(@NonNull Context context) {
+
+        ConnectivityManager connectivityManager =
+                (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
+
+        return connectivityManager != null &&
+                connectivityManager.getActiveNetworkInfo() != null &&
+                connectivityManager.getActiveNetworkInfo().isConnected();
     }
 
     public static boolean isNullOrWhitespace(String s) {
