@@ -148,4 +148,6 @@
     <string name="maximum_distance">Maximum distance: %d km</string>
     <string name="conditions_filter">At least in %s conditions</string>
     <string name="cancel">Cancel</string>
+    <string name="action_map">Show map</string>
+    <string name="attribute">Attribute</string>
 </resources>

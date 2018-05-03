@@ -11,6 +11,7 @@ import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.LatLngBounds;
+import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 
 import org.json.JSONArray;
@@ -27,13 +28,25 @@ public class MapWidget implements AlgoliaResultsListener {
     private GoogleMap googleMap;
 
     @NonNull
-    private List<JSONObject> hits = new ArrayList<>();
+    private final List<JSONObject> hits;
 
-    public MapWidget(@NonNull final SupportMapFragment mapFragment) {
+    public MapWidget(@NonNull final SupportMapFragment mapFragment,
+                     @NonNull OnBookSelectedListener onBookSelectedListener) {
+        hits = new ArrayList<>();
         mapFragment.getMapAsync(map -> {
             this.googleMap = map;
+            this.googleMap.setOnInfoWindowClickListener(marker ->
+                    onBookSelectedListener.onBookSelected((String) marker.getTag()));
             updateMapMarkers();
         });
+    }
+
+    private static String getMarkerTag(@NonNull JSONObject jsonObject) {
+        try {
+            return jsonObject.getString(Book.ALGOLIA_BOOK_ID_KEY);
+        } catch (JSONException e) {
+            return null;
+        }
     }
 
     private static MarkerOptions buildMarker(@NonNull JSONObject jsonObject) {
@@ -90,10 +103,12 @@ public class MapWidget implements AlgoliaResultsListener {
         LatLngBounds.Builder builder = new LatLngBounds.Builder();
 
         for (final JSONObject hit : hits) {
-            MarkerOptions marker = buildMarker(hit);
-            if (marker != null) {
-                builder.include(marker.getPosition());
-                googleMap.addMarker(marker);
+            String tag = getMarkerTag(hit);
+            MarkerOptions markerOptions = buildMarker(hit);
+            if (tag != null && markerOptions != null) {
+                builder.include(markerOptions.getPosition());
+                Marker marker = googleMap.addMarker(markerOptions);
+                marker.setTag(tag);
             }
         }
 
@@ -102,5 +117,9 @@ public class MapWidget implements AlgoliaResultsListener {
         int padding = 25;
         CameraUpdate cu = CameraUpdateFactory.newLatLngBounds(bounds, padding);
         googleMap.animateCamera(cu);
+    }
+
+    public interface OnBookSelectedListener {
+        void onBookSelected(String bookId);
     }
 }

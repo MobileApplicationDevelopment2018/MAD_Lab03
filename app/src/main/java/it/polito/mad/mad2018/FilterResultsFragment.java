@@ -287,11 +287,6 @@ public class FilterResultsFragment extends DialogFragment {
             this.max = max;
             this.steps = steps;
         }
-
-        @Override
-        protected void create() {
-            super.create();
-        }
     }
 
     private class CheckBoxDescription extends FilterDescription {

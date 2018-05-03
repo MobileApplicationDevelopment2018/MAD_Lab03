@@ -134,4 +134,6 @@
     <string name="book_conditions_list">Pessime, Discrete, Buone, Perfette</string>
     <string name="search">Cerca</string>
     <string name="cancel">Annulla</string>
+    <string name="action_map">Mostra mappa</string>
+    <string name="attribute">Attributo</string>
 </resources>

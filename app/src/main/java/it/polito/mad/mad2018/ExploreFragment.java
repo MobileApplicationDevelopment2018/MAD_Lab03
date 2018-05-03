@@ -31,14 +31,16 @@ import it.polito.mad.mad2018.widgets.MapWidget;
 
 public class ExploreFragment extends Fragment {
 
+    private final static String MAP_FRAGMENT_TAG = "map_fragment";
+    private final static String MAP_IS_SHOWN_KEY = "map_shown";
+
     private Searcher searcher;
-    private InstantSearch helper;
     private FilterResultsFragment filterResultsFragment;
+    private MapWidget mapWidget;
 
     private AppBarLayout appBarLayout;
     private View algoliaLogoLayout;
     private GoogleApiClient mGoogleApiClient;
-
 
     public ExploreFragment() { /* Required empty public constructor */ }
 
@@ -72,14 +74,6 @@ public class ExploreFragment extends Fragment {
 
         setHitsOnClickListener(view);
 
-        final SupportMapFragment mapFragment = SupportMapFragment.newInstance();
-        assert getFragmentManager() != null;
-        getFragmentManager().beginTransaction()
-                .replace(R.id.map_placeholder, mapFragment)
-                .commit();
-        MapWidget mapWidget = new MapWidget(mapFragment);
-        searcher.registerResultListener(mapWidget);
-
         return view;
     }
 
@@ -89,6 +83,11 @@ public class ExploreFragment extends Fragment {
 
         assert getActivity() != null;
         getActivity().setTitle(R.string.explore);
+
+        if (savedInstanceState != null &&
+                savedInstanceState.getBoolean(MAP_IS_SHOWN_KEY, false)) {
+            showMapFragment();
+        }
     }
 
     @Override
@@ -121,7 +120,7 @@ public class ExploreFragment extends Fragment {
 
         assert getActivity() != null;
         inflater.inflate(R.menu.menu_explore, menu);
-        helper = new InstantSearch(getActivity(), menu, R.id.menu_action_search, searcher);
+        InstantSearch helper = new InstantSearch(getActivity(), menu, R.id.menu_action_search, searcher);
         helper.search();
 
         MenuItem itemSearch = menu.findItem(R.id.menu_action_search);
@@ -140,9 +139,22 @@ public class ExploreFragment extends Fragment {
             case R.id.menu_action_filter:
                 filterResultsFragment.show(getChildFragmentManager(), FilterResultsFragment.TAG);
                 return true;
+            case R.id.menu_action_map:
+                if (this.mapWidget == null) {
+                    showMapFragment();
+                } else {
+                    hideMapFragment();
+                }
+                return true;
             default:
                 return super.onOptionsItemSelected(item);
         }
+    }
+
+    @Override
+    public void onSaveInstanceState(@NonNull Bundle outState) {
+        super.onSaveInstanceState(outState);
+        outState.putBoolean(MAP_IS_SHOWN_KEY, mapWidget != null);
     }
 
     private void setHitsOnClickListener(View view) {
@@ -169,5 +181,43 @@ public class ExploreFragment extends Fragment {
         mGoogleApiClient = new GoogleApiClient.Builder(getContext())
                 .addApi(LocationServices.API)
                 .build();
+    }
+
+    private void showMapFragment() {
+        if (mapWidget != null) {
+            searcher.unregisterResultListener(mapWidget);
+            mapWidget = null;
+        }
+
+        final SupportMapFragment mapFragment = SupportMapFragment.newInstance();
+        assert getFragmentManager() != null;
+        assert getView() != null;
+
+        getView().findViewById(R.id.map_placeholder).setVisibility(View.VISIBLE);
+        getFragmentManager().beginTransaction()
+                .replace(R.id.map_placeholder, mapFragment, MAP_FRAGMENT_TAG)
+                .commit();
+
+        this.mapWidget = new MapWidget(mapFragment, bookId -> {
+            Intent toBookInfo = new Intent(getActivity(), BookInfoActivity.class);
+            toBookInfo.putExtra(Book.BOOK_ID_KEY, bookId);
+            startActivity(toBookInfo);
+        });
+        searcher.registerResultListener(mapWidget);
+        searcher.search();
+    }
+
+    private void hideMapFragment() {
+        assert getFragmentManager() != null;
+        assert getView() != null;
+
+        getView().findViewById(R.id.map_placeholder).setVisibility(View.GONE);
+        Fragment mapFragment = getFragmentManager().findFragmentByTag(MAP_FRAGMENT_TAG);
+        getFragmentManager().beginTransaction()
+                .remove(mapFragment)
+                .commit();
+
+        searcher.unregisterResultListener(mapWidget);
+        mapWidget = null;
     }
 }
