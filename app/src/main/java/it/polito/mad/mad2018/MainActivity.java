@@ -5,6 +5,7 @@ import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.drawable.Drawable;
+import android.os.Build;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.StringRes;
@@ -131,6 +132,10 @@ public class MainActivity extends AppCompatActivityDialog<MainActivity.DialogID>
                 this.replaceFragment(ShowProfileFragment.newInstance(UserProfile.localInstance, true));
                 break;
 
+            case R.id.nav_help:
+                this.replaceFragment(AboutFragment.newInstance());
+                break;
+
             case R.id.nav_sign_out:
                 signOut();
                 break;
@@ -195,8 +200,10 @@ public class MainActivity extends AppCompatActivityDialog<MainActivity.DialogID>
 
     private void updateNavigationView() {
 
-        if (this.isDestroyed()) {
-            return;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
+            if (this.isDestroyed()) {
+                return;
+            }
         }
 
         NavigationView drawer = findViewById(R.id.nav_view);

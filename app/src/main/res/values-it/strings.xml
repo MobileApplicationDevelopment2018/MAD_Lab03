@@ -140,4 +140,19 @@
     <string name="no_internet_connection">Nessuna connessione ad Internet</string>
     <string name="internet_needed">E\' necessaria una connessione ad Internet attiva per utilizzare questa applicazione</string>
     <string name="exit">Esci</string>
+    <string name="nav_about">Info</string>
+    <string name="application_description">
+        Lo scopo di questa applicazione è di creare una piattaforma per scambiare libri tra utenti.
+    </string>
+    <string name="explore_description">
+        In questa sezione puoi navigare tra i libri che gli utenti vogliono condividere. Usa le funzioni di ricerca per trovare un libro specifico digitando il suo titolo, i suoi autori o il suo ISBN. I risultati di ricerca saranno mostrati in tempo reale mentre scrivi.
+        Cliccando sull\'icona nell\'angolo in alto a destra della toolbar puoi visualizzare i risultati su una mappa.
+    </string>
+    <string name="library_description">
+        Questa sezione è divisa in tre parti. In "I miei libri" puoi vedere i libri che stai condividendo, e da qui puoi aggiungere nuovi libri.
+        Nelle altre due sezioni puoi vedere i tuoi libri prestati e quelli presi in prestito.
+    </string>
+    <string name="profile_description">
+        Qui puoi trovare tutte le informazioni sul tuo profilo, e cliccando sull\'icona della matita nell\'angolo in alto a destra puoi modificarle
+    </string>
 </resources>

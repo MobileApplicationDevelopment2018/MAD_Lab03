@@ -154,4 +154,20 @@
     <string name="no_internet_connection">No Internet connection</string>
     <string name="internet_needed">You need an active Internet connection to use this application</string>
     <string name="exit">Exit</string>
+    <string name="nav_about">About</string>
+
+    <string name="application_description">
+        The aim of this application is to create a platform for users to share books.
+    </string>
+    <string name="explore_description">
+        In this section you can browse through all the books the users are willing to share. Use the search functions to find a specific book by looking for its title, authors or ISBN. Results will be displayed in real-time as you type.
+        By clicking the pin icon in the up right corner of the toolbar you can display your results on a map.
+    </string>
+    <string name="library_description">
+        This section is subdivided in 3 parts. In your books you can find the books you\'re willing to share, here you can add other books.
+        Then in the other 2 sections you can see your borrowed books and your lent books.
+    </string>
+    <string name="profile_description">
+        Here you can find all information of your profile and by clicking the pencil icon in the upright corner you can modify them.
+    </string>
 </resources>
